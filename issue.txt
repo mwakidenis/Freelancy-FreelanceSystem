@@ -1,0 +1,66 @@
+ISSUES:
+
+1. Multiple freelance api calls (for initial and searched)
+    > IDEAL:
+        - 1 CREATE A FUNCTION WITH API CALL FOR EVERYTHING BUT TAKE INTO CONSIDERATION THAT THERE MUST BE AN INITIAL ONE, SEARCHED AND PAGED 
+            > WHAT IF I USE SWITCH CASE 
+                > default : initialFreelances > with page????
+                > case 1 : query 
+                > case 2 
+2. Being able to navigate through pages > OK (BUT ADD ROUTE QUERY)
+    > HOWEVER! my cons is if there is query/existing query for page it wont fetch that, so i have to take it to consideration
+3. Route query changes with live search + pagination + other filtering
+
+
+
+what if:
+
+watcheffect
+    > then instantiate an object with a value of /freelances
+    then append/+= query and page if there is a value
+    BUT THE PROBLEM IS 
+    there must be a ? for the first parameter and & for second one
+    
+    ORIGINAL:
+    let link = "/freelances";
+
+    if query && page link += '?query={queryValue}&page={pageValue}
+ 
+    else link += ?
+        if query link += query={queryValue}
+        else link += page={pageValue}
+
+
+
+PROCESS
+1. onMounted > initialFreelances - with checkPages function inside initialFreelances function
+    onMounted(() => {
+        initialFreelances();
+    });
+2. switchPage function - takes query and page as parameter (since if the query has empty input it will just return plain pages)
+    async function switchPage(query,page){
+        try{
+            const response = await api.get(`/freelances?page=${page}`,{params:{query}});
+        } catch (error){
+            console.error(error);
+        }
+    }
+3. watch function with debounce wherein it checks the query + reset page number
+    watch((queryParams,newQuery) => {
+        if queryParams.value fetchFreelances (idk if function)
+        else initialFreelances
+    });
+4. router.replace for query and pages
+    use functionBuildlink + router replace
+5. reset pages especially if there is no searched result
+
+
+KEY TAKE AWAYS:
+Methods:
+checkNumberOfPage() - for checking the number of page
+initialFreelances() - initial state 
+searchFreelances(query) - for searching items
+switchPage(query,page) - for switching page (add query in case if there is a searched query)
+
+watch > for checking query search
+watcheffect > for url rerouting
