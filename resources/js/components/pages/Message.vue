@@ -6,60 +6,35 @@ import { useAuthStore } from "../../authStore";
 import { House,ArrowLeft,CircleUserRound,SendHorizonal } from "lucide-vue-next";
 import moment from 'moment';
 
-// const route = useRoute();
-// const authStore = useAuthStore();
+//pusher 
+const authStore = useAuthStore();
 
-// const username = ref(route.params.username);
-// const messages = ref([]);
-
-// const channelName = ref(null);
-
-// const sender = ref(authStore.getUser);
-// const receiver = ref('');
-
-// const messageDescription = ref(null);
-
-// const ids = [sender?.id, receiver?.id].sort((a, b) => a - b);
-// channelName.value = `chat.${ids[0]}.${ids[1]}`;
-
-// window.Echo.private(channelName.value)
-// .listen('MessageSent', (e) => {
-//     console.log("Got message:", e); 
-//     messages.value.push(e);
-// });
-
-// async function fetchMessages() {
-//   try {
-//     const response = await api.get(`/message/${username.value}`, {
-//       withCredentials: true
-//     });
-//     messages.value = response.data.data;
-//   } catch (error) {
-//     console.error("Error fetching messages:", error);
-//   }
-// }
-
-// async function fetchReceiver(){
-//   try {
-//     const response = await api.get(`/${username.value}`);
-//     receiver.value = response.data.data;
-//   } catch (error){
-//     console.error(error);
-//   }
-// }
+const sender = ref(authStore.getUser);
+const receiver = ref('');
 
 
-  
+watch(receiver,(newVal) => {
+  const ids = [sender?.value.id, receiver?.value.id].sort((a, b) => a - b);
+  const channelName = ref(null);
+  channelName.value = `chat.${ids[0]}.${ids[1]}`;
+  console.log("channel name:",channelName.value);
+
+  window.Echo.private(channelName.value)
+  .listen('MessageSent', (e) => {
+      console.log("Got message:", e); 
+      messages.value.push(e);
+  });
+});
+
 //frontend logic and variables 
 const now = ref(new Date());
 let interval;
 const isMobile = ref(window.innerWidth < 768);
 const isToggled = ref(false);
 
-function handleResize() {
+function handleResize() { //ui 2 column resize
   isMobile.value = window.innerWidth < 768;
 }
-
 
 onMounted(async () => {
   await fetchInbox(); //fetch inbox
@@ -75,9 +50,6 @@ onMounted(async () => {
   interval = setInterval(() => {
     now.value = new Date() 
   }, 60000)
-  
-
-  // console.log("first value is: ", inbox.value?.[0]?.username);
 });
 
 onBeforeUnmount(() => {
@@ -88,39 +60,30 @@ onUnmounted(() => {
   clearInterval(interval);
 });
 
-watch(isMobile, (newVal) => {
+watch(isMobile, (newVal) => { //watch for checking the changes in variable isMobile
   console.log("Change in mobile:", newVal);
   if (!newVal) {
-    isToggled.value = false; // Reset toggle on large screen
+    isToggled.value = false;
   }
 });
 
-// watch(() => )
-
-function viewMessage(){ //i will fetch messages depending on which conversation is opened
-  isToggled.value = true;
-  //fetch method
-  console.log("is toggled is clicked! is togggled value is: ",isToggled.value);
-  console.log("is toggled is clicked! is mobile value is: ",isToggled.value);
-}
-
-function backToInbox(){
+function backToInbox(){ //for mobile view
   isToggled.value = false;
 }
 
-function autoResize() {
-  const el = messageInput.value
+function autoResize() { //for textbox
+  const el = messageInputRef.value
   el.style.height = 'auto'
   el.style.height = el.scrollHeight + 'px'
 }
-
 
 //backend fetches and variables
 const inbox = ref([null]);
 const messages = ref([null]);
 
 var username = ref(null);
-const messageInput = ref(null);
+const messageInput = ref('');
+const messageInputRef = ref(null)
 
 async function fetchInbox() {
   try {
@@ -136,7 +99,19 @@ async function fetchMessages(user){
     const response = await api.get(`/message/inbox/${user}`,{withCredentials:true});
     messages.value = response.data.data;
     username.value = user;
+    fetchUser(user);
   } catch (error) {
+    console.error(error);
+  } finally {
+    isToggled.value = isMobile ? true : false;
+  }
+}
+
+async function fetchUser(user){
+  try{
+    const response = await api.get(`/profile/${user}`);
+    receiver.value = response.data.data;
+  } catch(error){
     console.error(error);
   }
 }
@@ -159,12 +134,10 @@ const sendMessage = async () => {
   }
 };
 
-function formatInboxTime(sent) {
-  // re-evaluates every time `now` changes
-  now.value // dependency tracking
+function formatInboxTime(sent) { //formats time elapsed when the message was sent in inbox
+  now.value
   return sent ? moment.utc(sent).local().fromNow() : ''
 }
-
 </script>
 
 <template>
@@ -184,7 +157,7 @@ function formatInboxTime(sent) {
     </div>
     
     <ul class="overflow-y-auto max-h-[calc(100vh-112px)]">
-      <li v-for="(inboxMessage,index) in inbox" @click="fetchMessages(inboxMessage?.username); viewMessage()"
+      <li v-for="(inboxMessage,index) in inbox" @click="fetchMessages(inboxMessage?.username);"
         class="p-4 border-b border-gray-300 cursor-pointer flex gap-3 hover:bg-gray-100"
         :class="{'bg-gray-100' : username == inboxMessage?.username}">
         <CircleUserRound class="w-12 h-12"/>
@@ -227,10 +200,6 @@ function formatInboxTime(sent) {
         </div>
       </div>
 
-      <!-- Add more to test scroll -->
-       
-          <!-- {{ message?.message }}
-       </div> -->
     </div>
 
     <!-- Chat input fixed at bottom -->
@@ -239,9 +208,10 @@ function formatInboxTime(sent) {
         class="border border-gray-300 p-2 rounded w-full min-h-[3rem] resize-none overflow-hidden"
         rows="1"
         @input="autoResize"
-        ref="messageInput"
+        ref="messageInputRef"
+        v-model="messageInput"
       ></textarea>
-      <SendHorizonal class="text-blue-500 cursor-pointer"/>
+      <SendHorizonal class="text-blue-500 cursor-pointer" @click = "sendMessage"/>
     </div>
 
   </div>
