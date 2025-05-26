@@ -1,5 +1,6 @@
 <script setup>
 import { useAuthStore } from '../../authStore';
+import { MessageSquareMore } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
 </script>
@@ -9,6 +10,9 @@ const authStore = useAuthStore();
     <div class="max-w-[1300px] w-full flex items-center justify-between mx-auto px-2">
         <router-link to="/" class="text-5xl uppercase font-extrabold text-blue-500 ">Freelancy</router-link>
         <div v-if="authStore.isAuthenticated" class="flex gap-4">
+            <router-link to="/inbox">
+                <MessageSquareMore/>
+            </router-link>
             <div v-if="authStore.isClient">
                 <router-link :to="{name:'client-view-projects'}">Projects</router-link>
             </div>
