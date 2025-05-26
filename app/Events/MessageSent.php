@@ -11,7 +11,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use App\Models\{Message};
+use App\Models\{Message,User};
 
 class MessageSent implements ShouldBroadcast
 {
@@ -36,7 +36,6 @@ class MessageSent implements ShouldBroadcast
     {
         $ids = [$this->message->sender_id, $this->message->recipient_id];
         sort($ids);
-        // Log::info('Broadcasting on channel: chat.' . $ids[0] . '.' . $ids[1]);
         return [
             new PrivateChannel("chat.{$ids[0]}.{$ids[1]}"),
         ];
@@ -45,14 +44,13 @@ class MessageSent implements ShouldBroadcast
 
     public function broadcastWith()
     {
-        // Log::info("Message object is:".$this->message);
-        // Log::info("Message property is:".$this->message->message);
+        $sender = User::where('id',$this->message->sender_id)->first();
+        $recipient = User::where('id',$this->message->recipient_id)->first();
         return [
-            'id' => $this->message->id,
-            'sender_id' => $this->message->sender_id,
-            'recipient_id' => $this->message->recipient_id,
-            'message' => $this->message->message, // <-- Ensure there's no missing comma here
-            'created_at' => $this->message->created_at // <-- Also check if this line has the correct syntax
+            'sender' => $sender->username,
+            'recipient' => $recipient->username,
+            'message' => $this->message->message,
+            'sent_at' => $this->message->created_at
         ];
     }
 }
