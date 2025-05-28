@@ -3,7 +3,7 @@ import { ref, onMounted, onBeforeUnmount,watch, onUnmounted } from "vue";
 import { useRoute,useRouter } from "vue-router";
 import api from "../../api";
 import { useAuthStore } from "../../authStore";
-import { House,ArrowLeft,CircleUserRound,SendHorizonal } from "lucide-vue-next";
+import { House,ArrowLeft,CircleUserRound,SendHorizonal,SquarePen } from "lucide-vue-next";
 import moment from 'moment';
 
 //conversation variables 
@@ -26,7 +26,8 @@ const username = ref(route.params.username || null);
 
 //form variables
 const messageInput = ref('');
-const messageInputRef = ref(null)
+const messageInputRef = ref(null);
+const isNewMessage = ref(false);
 
 onMounted(async () => {
   await fetchInbox();
@@ -120,6 +121,11 @@ const sendMessage = async () => {
     messageInput.value = null;
   }
 };
+ 
+const writeNewMessage = () => {
+  isNewMessage.value = true;
+  router.push('/inbox/new')
+}
 
 async function fetchInbox() {
   try {
@@ -166,12 +172,24 @@ async function fetchUser(user){
         <House class="text-blue-500"/>
       </router-link>
       <div class="p-4 font-bold">Inbox</div>
+      <div class="ml-auto">
+        <SquarePen @click="writeNewMessage" class="cursor-pointer" />
+      </div>
     </div>
 
     <ul class="overflow-y-auto max-h-[calc(100vh-112px)]">
+      <!--  -->
+      <li v-if="isNewMessage"
+        class="p-4 border-b border-gray-300 cursor-pointer flex gap-3 bg-gray-100">
+        <CircleUserRound class="w-12 h-12"/>
+        <div class="flex flex-col mt-2 w-full">
+          <div class="font-bold">New Message</div>
+        </div>
+      </li>
+      <!--  -->
       <li v-for="(inboxMessage,index) in inbox" @click="router.push({ name: 'inbox', params: { username: inboxMessage?.username } })"
         class="p-4 border-b border-gray-300 cursor-pointer flex gap-3 hover:bg-gray-100"
-        :class="{'bg-gray-100' : username == inboxMessage?.username}">
+        :class="{'bg-gray-100' : username == inboxMessage?.username && !isNewMessage }">
         <CircleUserRound class="w-12 h-12"/>
         <div class="flex flex-col mt-2 w-full">
           <div class="font-bold">{{ inboxMessage?.username ?? '' }}</div>
@@ -201,6 +219,25 @@ async function fetchUser(user){
 
     <!-- Scrollable messages -->
     <div class="flex-1 overflow-y-auto p-4 space-y-2 max-h-[calc(100vh-160px)]">
+      <!--  
+      methods
+1. if write icon is clicked
+    > left side panel displays new message 
+    > router.push({'/url'})
+    > blank username and message panel 
+    > if write icon is currently opened 
+     : if the user click to other message in inbox whilst the write icon is currently opened,
+     isNewMessage.value router.push
+    > fetch users in inbox when "to" is clicked 
+
+2. if contacts is clicked 
+    > fetch messages 
+    > left side panel displays new message to :user
+
+3. if new message is sent 
+    > new message pane on left side is gone replaced by in the inbox and push url to /inbox/:username
+      -->
+
       <div v-for="(message,index) in messages">
         <div v-if="message?.sender == username">
           <!-- User 1 -->

@@ -75,6 +75,11 @@ const routes = [
         name: "inbox"
     },
     {
+        path: '/inbox/new',
+        component: Message,
+        name: "new-message"
+    },
+    {
         path: '/example',
         component: Example
     }, 
