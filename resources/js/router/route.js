@@ -70,9 +70,9 @@ const routes = [
         ]
     },
     {
-        path: '/inbox',
+        path: '/inbox/:username?',
         component: Message,
-        name: "message"
+        name: "inbox"
     },
     {
         path: '/example',

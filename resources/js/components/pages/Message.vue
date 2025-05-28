@@ -8,8 +8,8 @@ import moment from 'moment';
 
 //conversation variables 
 const authStore = useAuthStore();
-const route = useRoute();
-const router = useRouter();
+const route = useRoute(); //url params
+const router = useRouter(); //url re-writing
 const sender = ref(authStore.getUser);
 const receiver = ref('');
 
@@ -22,7 +22,7 @@ const isToggled = ref(false);
 //backend fetches and variables
 const inbox = ref([null]);
 const messages = ref([null]);
-var username = ref(null);
+const username = ref(route.params.username || null);
 
 //form variables
 const messageInput = ref('');
@@ -31,8 +31,14 @@ const messageInputRef = ref(null)
 onMounted(async () => {
   await fetchInbox();
 
-  if(isMobile.value == false){
-    await fetchMessages(inbox.value?.[0]?.username);
+  if (isMobile.value == false){
+    username.value = username.value != null ? username.value : inbox.value?.[0]?.username;
+    await fetchMessages(username.value);
+    router.replace({
+        params: {
+            username: username.value
+        }
+    });
   }
 
   //ui resize
@@ -54,6 +60,12 @@ onBeforeUnmount(() => {
 
 onUnmounted(() => {
   clearInterval(interval);
+});
+
+watch(() => route.params.username, (newUsername) => {
+  if (newUsername) {
+    fetchMessages(newUsername);
+  }
 });
 
 watch(receiver,(newVal) => { //monitoring the conversation partner
@@ -155,9 +167,9 @@ async function fetchUser(user){
       </router-link>
       <div class="p-4 font-bold">Inbox</div>
     </div>
-    
+
     <ul class="overflow-y-auto max-h-[calc(100vh-112px)]">
-      <li v-for="(inboxMessage,index) in inbox" @click="fetchMessages(inboxMessage?.username);"
+      <li v-for="(inboxMessage,index) in inbox" @click="router.push({ name: 'inbox', params: { username: inboxMessage?.username } })"
         class="p-4 border-b border-gray-300 cursor-pointer flex gap-3 hover:bg-gray-100"
         :class="{'bg-gray-100' : username == inboxMessage?.username}">
         <CircleUserRound class="w-12 h-12"/>
