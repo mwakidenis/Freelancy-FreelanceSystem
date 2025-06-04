@@ -56,6 +56,17 @@ class MessageController extends Controller
     public function retrieveMessages($username=null){
         $user = $this->getUser();
         $recipient = User::where('username',$username)->first();
+
+        if (!$recipient){
+            $this->response = [
+                'msg' => 'User not found',
+                'status' => false,
+                'status_code' => 'USER_NOT_FOUND'
+            ];
+            $this->response_code = 404;
+            goto callback;
+        }
+
         $messages = Message::where(function($query) use ($user,$recipient){
                 $query->where('sender_id',$user->id) 
                     ->where('recipient_id',$recipient->id);
@@ -73,6 +84,7 @@ class MessageController extends Controller
         ] + UserMessageResource::collection($messages)->response()->getData(true);
         $this->response_code = 200;
         
+        callback:
         return response()->json($this->response,$this->response_code);
     }
 
@@ -81,9 +93,9 @@ class MessageController extends Controller
         $recipient = User::where('username',$username)->first();
         if (!$recipient){
             $this->response = [
-                'msg' => 'User not found',
+                'msg' => 'User not found.',
                 'status' => false,
-                'status_code' => 'NOT_FOUND'
+                'status_code' => 'USER_NOT_FOUND'
             ];
             $this->response_code = 404;
             goto callback;

@@ -177,6 +177,7 @@ async function fetchInbox() {
 }
 
 async function fetchMessages(user){
+  const isValid = ref(false);
   messages.value = [];
   isLoading.value = true;
   try {
@@ -184,10 +185,16 @@ async function fetchMessages(user){
     messages.value = response.data.data;
     username.value = user;
     fetchUser(user);
+    isValid.value = true;
   } catch (error) {
+    if (error.status === 404){
+      isLoading.value = true;
+    }
     console.error(error);
   } finally {
-    isLoading.value = false;
+    if (isValid.value == true){
+      isLoading.value = false;
+    }
     isToggled.value = isMobile ? true : false;
   }
 }
@@ -230,7 +237,7 @@ async function fetchRecentContacts(){
     </div>
 
     <ul class="overflow-y-auto max-h-[calc(100vh-112px)]">
-      <!--  -->
+
       <li v-if="isNewMessage"
         class="p-4 border-b border-gray-300 cursor-pointer flex gap-3 bg-gray-100">
         <CircleUserRound class="w-12 h-12"/>
@@ -238,7 +245,7 @@ async function fetchRecentContacts(){
           <div class="font-bold">New Message</div>
         </div>
       </li>
-      <!--  -->
+      
       <li v-for="(inboxMessage,index) in inbox" @click="switchMessages(inboxMessage?.username)"
         class="p-4 border-b border-gray-300 cursor-pointer flex gap-3 hover:bg-gray-100"
         :class="{'bg-gray-100' : username == inboxMessage?.username && !isNewMessage }">
@@ -266,28 +273,33 @@ async function fetchRecentContacts(){
         'block': isMobile && isToggled,
         'hidden': !isMobile || !isToggled,
       }"/>
-      <div v-if="isNewMessage">
-        <div class="flex justify-content-center gap-5">
-          <div class="font-bold">To:</div> 
-          <div class="border border-gray-300 w-60 h-8 cursor-pointer rounded" @click="handleSelectRecentContacts">
-            <div v-if="isRecentContactsClicked" 
-              class="relative border border-gray-300 w-60 min-h-auto max-h-60 bg-gray-50 mt-7.5 z-40 text-xs flex flex-col overflow-y-auto space-y-1">
-              <div class="font-bold p-2">Recent contacts</div>
-              <div v-for="(contact,index) in recentContacts" class="border-t border-gray-300 p-2 hover:bg-gray-300" @click="switchMessages(contact?.username)">
-                {{ contact?.username }}
+
+
+      <div v-if="!isLoading">
+        <div v-if="isNewMessage">
+          <div class="flex justify-content-center gap-5">
+            <div class="font-bold">To:</div> 
+            <div class="border border-gray-300 w-60 h-8 cursor-pointer rounded" @click="handleSelectRecentContacts">
+              <div v-if="isRecentContactsClicked" 
+                class="relative border border-gray-300 w-60 min-h-auto max-h-60 bg-gray-50 mt-7.5 z-40 text-xs flex flex-col overflow-y-auto space-y-1">
+                <div class="font-bold p-2">Recent contacts</div>
+                <div v-for="(contact,index) in recentContacts" class="border-t border-gray-300 p-2 hover:bg-gray-300" @click="switchMessages(contact?.username)">
+                  {{ contact?.username }}
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        <div v-else class="flex items-center gap-2">
+          <CircleUserRound class="w-8 h-8"/> {{username}}
+        </div> 
       </div>
 
-      <div v-else class="flex items-center gap-2">
-        <CircleUserRound class="w-8 h-8"/> {{username}}
-      </div> 
     </div>
 
     <!-- Scrollable messages -->
-    <div class="relative flex-1 p-4 overflow-y-auto space-y-2 max-h-[calc(100vh-160px)]">
+    <div v-if="!isLoading" class="relative flex-1 p-4 overflow-y-auto space-y-2 max-h-[calc(100vh-160px)]">
 
       <div v-if="!isNewMessage" v-for="(message,index) in messages">
         <div v-if="message?.sender == username">
@@ -302,16 +314,24 @@ async function fetchRecentContacts(){
 
     </div>
 
-    <!-- Chat input fixed at bottom -->
-    <div v-if="!isNewMessage" class="flex items-center gap-2 p-4">
-      <textarea
-        class="border border-gray-300 p-2 rounded w-full min-h-[3rem] resize-none overflow-hidden"
-        rows="1"
-        @input="autoResize"
-        ref="messageInputRef"
-        v-model="messageInput"
-      ></textarea>
-      <SendHorizonal class="text-blue-500 cursor-pointer" @click = "sendMessage"/>
+    <div v-if="isLoading" class="w-full h-full">
+      <div class="w-full h-full flex justify-center items-center">
+        <clip-loader :loading="loading" color="#2b7fff" :size="size"></clip-loader>
+      </div>
+
+    </div>
+    <div v-else>
+      <!-- Chat input fixed at bottom -->
+      <div v-if="!isNewMessage" class="flex items-center gap-2 p-4">
+        <textarea
+          class="border border-gray-300 p-2 rounded w-full min-h-[3rem] resize-none overflow-hidden"
+          rows="1"
+          @input="autoResize"
+          ref="messageInputRef"
+          v-model="messageInput"
+        ></textarea>
+        <SendHorizonal class="text-blue-500 cursor-pointer" @click = "sendMessage"/>
+      </div>
     </div>
 
   </div>
