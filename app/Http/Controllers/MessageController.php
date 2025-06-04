@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\{Message,User};
 use App\Events\{MessageSent};
-use App\Http\Resources\{UserInboxResource,UserMessageResource};
+use App\Http\Resources\{UserInboxResource,UserMessageResource,RecentContactsResource};
 use DB;
 use Illuminate\Support\Facades\Cookie;
 
@@ -49,7 +49,7 @@ class MessageController extends Controller
             'status_code' => 'INBOX',
         ] + UserInboxResource::collection($inbox)->response()->getData(true);
         $this->response_code = 200;
-
+ 
         return response()->json($this->response,$this->response_code);
     }
 
@@ -115,6 +115,38 @@ class MessageController extends Controller
             $this->response_code = 500;
         }
         callback:
+        return response()->json($this->response,$this->response_code);
+    }
+
+    public function retrieveRecentContacts(){
+        $user = $this->getUser();                    
+        $inbox = DB::table('messages as m1')
+                ->where(function($query) use ($user) {
+                    $query->where('m1.sender_id', $user->id)
+                        ->orWhere('m1.recipient_id', $user->id);
+                })
+                ->selectRaw('
+                    LEAST(m1.sender_id, m1.recipient_id) as user1, 
+                    GREATEST(m1.sender_id, m1.recipient_id) as user2,
+                    m1.message,
+                    m1.created_at
+                ')
+                ->whereRaw('m1.created_at = (
+                    SELECT MAX(m2.created_at)
+                    FROM messages m2
+                    WHERE LEAST(m1.sender_id, m1.recipient_id) = LEAST(m2.sender_id, m2.recipient_id)
+                    AND GREATEST(m1.sender_id, m1.recipient_id) = GREATEST(m2.sender_id, m2.recipient_id)
+                )')
+                ->orderByDesc('m1.created_at')
+                ->paginate($this->per_page);
+
+        $this->response = [
+            'msg' => 'Recent Contacts',
+            'status' => true,
+            'status_code' => 'RECENT_CONTACTS'
+        ] + RecentContactsResource::collection($inbox)->response()->getData(true);
+        $this->response_code = 200;
+
         return response()->json($this->response,$this->response_code);
     }
 }

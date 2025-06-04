@@ -4,6 +4,7 @@ import { useRoute,useRouter } from "vue-router";
 import api from "../../api";
 import { useAuthStore } from "../../authStore";
 import { House,ArrowLeft,CircleUserRound,SendHorizonal,SquarePen } from "lucide-vue-next";
+import { ClipLoader } from 'vue-spinner/dist/vue-spinner.min.js'
 import moment from 'moment';
 
 //conversation variables 
@@ -23,11 +24,14 @@ const isToggled = ref(false);
 const inbox = ref([null]);
 const messages = ref([null]);
 const username = ref(route.params.username || null);
+const recentContacts = ref([]);
+const isRecentContactsClicked = ref(false);
 
 //form variables
 const messageInput = ref('');
 const messageInputRef = ref(null);
 const isNewMessage = ref(false);
+const isLoading = ref(false);
 
 onMounted(async () => {
   await fetchInbox();
@@ -40,6 +44,12 @@ onMounted(async () => {
             username: username.value
         }
     });
+  }
+
+  if (route.name === 'new-message'){
+    console.log("new message");
+    username.value = null;
+    isNewMessage.value = true;
   }
 
   //ui resize
@@ -64,7 +74,7 @@ onUnmounted(() => {
 });
 
 watch(() => route.params.username, (newUsername) => {
-  if (newUsername) {
+  if (newUsername && isNewMessage.value == false) {
     fetchMessages(newUsername);
   }
 });
@@ -81,13 +91,21 @@ watch(receiver,(newVal) => { //monitoring the conversation partner
 });
 
 watch(isMobile, (newVal) => { //watch for checking the changes in variable isMobile
-  if (!newVal) { 
+  if (!newVal) {  
     isToggled.value = false;
+  } else {
+    isToggled.value = true;
   }
 });
 
 function backToInbox(){ //for mobile view
   isToggled.value = false;
+  username.value = "";
+  isNewMessage.value = false;
+  recentContacts.value = [];
+  isRecentContactsClicked.value = false;
+  messages.value = [];
+  router.push({name:'inbox'});
 }
 
 function handleResize() { //ui 2 column resize
@@ -123,8 +141,30 @@ const sendMessage = async () => {
 };
  
 const writeNewMessage = () => {
+  username.value = null;
   isNewMessage.value = true;
-  router.push('/inbox/new')
+  router.push('/inbox/new');
+  if (isMobile) {
+    isToggled.value = true;
+  }
+}
+
+const switchMessages = (usernameInput) => {
+  isNewMessage.value = false;
+  recentContacts.value = [];
+  isRecentContactsClicked.value = false;
+  username.value = usernameInput;
+  router.push({ name: 'inbox', params: { username: usernameInput } });
+}
+
+async function handleSelectRecentContacts(){
+  if (isRecentContactsClicked.value == false){
+    isRecentContactsClicked.value = true;
+    await fetchRecentContacts();
+  } else {
+    isRecentContactsClicked.value = false;
+    recentContacts.value = [];
+  }
 }
 
 async function fetchInbox() {
@@ -137,6 +177,8 @@ async function fetchInbox() {
 }
 
 async function fetchMessages(user){
+  messages.value = [];
+  isLoading.value = true;
   try {
     const response = await api.get(`/message/inbox/${user}`,{withCredentials:true});
     messages.value = response.data.data;
@@ -145,6 +187,7 @@ async function fetchMessages(user){
   } catch (error) {
     console.error(error);
   } finally {
+    isLoading.value = false;
     isToggled.value = isMobile ? true : false;
   }
 }
@@ -154,6 +197,15 @@ async function fetchUser(user){
     const response = await api.get(`/profile/${user}`);
     receiver.value = response.data.data;
   } catch(error){
+    console.error(error);
+  }
+}
+
+async function fetchRecentContacts(){
+  try{
+    const response = await api.get('/message/recent-contacts');
+    recentContacts.value = response.data.data;
+  } catch (error){
     console.error(error);
   }
 }
@@ -187,7 +239,7 @@ async function fetchUser(user){
         </div>
       </li>
       <!--  -->
-      <li v-for="(inboxMessage,index) in inbox" @click="router.push({ name: 'inbox', params: { username: inboxMessage?.username } })"
+      <li v-for="(inboxMessage,index) in inbox" @click="switchMessages(inboxMessage?.username)"
         class="p-4 border-b border-gray-300 cursor-pointer flex gap-3 hover:bg-gray-100"
         :class="{'bg-gray-100' : username == inboxMessage?.username && !isNewMessage }">
         <CircleUserRound class="w-12 h-12"/>
@@ -203,42 +255,41 @@ async function fetchUser(user){
   </div>
 
   <!-- Right: Chat window -->
-  <div class="rounded-xl border border-gray-300 flex flex-col flex-1"
+  <div class="rounded-xl border border-gray-300 flex flex-col flex-1 z-10"
     :class="{
       'hidden': isMobile && !isToggled,
       'w-full': isMobile && isToggled,
     }">
-    <div class="flex gap-3 p-4 font-bold border-b border-gray-300">
+    <div class="flex gap-3 p-4 border-b border-gray-300">
       <ArrowLeft class="cursor-pointer" @click="backToInbox"
       :class="{
         'block': isMobile && isToggled,
         'hidden': !isMobile || !isToggled,
       }"/>
-      <div class="flex items-center gap-2"><CircleUserRound class="w-8 h-8"/> {{username}}</div>
+      <div v-if="isNewMessage">
+        <div class="flex justify-content-center gap-5">
+          <div class="font-bold">To:</div> 
+          <div class="border border-gray-300 w-60 h-8 cursor-pointer rounded" @click="handleSelectRecentContacts">
+            <div v-if="isRecentContactsClicked" 
+              class="relative border border-gray-300 w-60 min-h-auto max-h-60 bg-gray-50 mt-7.5 z-40 text-xs flex flex-col overflow-y-auto space-y-1">
+              <div class="font-bold p-2">Recent contacts</div>
+              <div v-for="(contact,index) in recentContacts" class="border-t border-gray-300 p-2 hover:bg-gray-300" @click="switchMessages(contact?.username)">
+                {{ contact?.username }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="flex items-center gap-2">
+        <CircleUserRound class="w-8 h-8"/> {{username}}
+      </div> 
     </div>
 
     <!-- Scrollable messages -->
-    <div class="flex-1 overflow-y-auto p-4 space-y-2 max-h-[calc(100vh-160px)]">
-      <!--  
-      methods
-1. if write icon is clicked
-    > left side panel displays new message 
-    > router.push({'/url'})
-    > blank username and message panel 
-    > if write icon is currently opened 
-     : if the user click to other message in inbox whilst the write icon is currently opened,
-     isNewMessage.value router.push
-    > fetch users in inbox when "to" is clicked 
+    <div class="relative flex-1 p-4 overflow-y-auto space-y-2 max-h-[calc(100vh-160px)]">
 
-2. if contacts is clicked 
-    > fetch messages 
-    > left side panel displays new message to :user
-
-3. if new message is sent 
-    > new message pane on left side is gone replaced by in the inbox and push url to /inbox/:username
-      -->
-
-      <div v-for="(message,index) in messages">
+      <div v-if="!isNewMessage" v-for="(message,index) in messages">
         <div v-if="message?.sender == username">
           <!-- User 1 -->
           <div class="bg-blue-100 p-2 rounded max-w-sm">{{message?.message}}</div>
@@ -252,7 +303,7 @@ async function fetchUser(user){
     </div>
 
     <!-- Chat input fixed at bottom -->
-    <div class="flex items-center gap-2 p-4">
+    <div v-if="!isNewMessage" class="flex items-center gap-2 p-4">
       <textarea
         class="border border-gray-300 p-2 rounded w-full min-h-[3rem] resize-none overflow-hidden"
         rows="1"

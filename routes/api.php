@@ -118,6 +118,8 @@ Route::group(['prefix'=>'message','as'=>'message.','namespace'=>'App\Http\Contro
 
     Route::get('/inbox/{username?}',['uses'=>'MessageController@retrieveMessages']);
     Route::post('/inbox/{username?}',['uses'=>'MessageController@sendMessage']);
+
+    Route::get('/recent-contacts',['uses'=>'MessageController@retrieveRecentContacts']);
 });
 
 Route::group(['namespace'=>'App\Http\Controllers'], function() {
