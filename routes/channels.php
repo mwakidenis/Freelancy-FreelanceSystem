@@ -18,3 +18,7 @@ use Illuminate\Support\Facades\Broadcast;
 Broadcast::channel('chat.{user1}.{user2}', function ($user, $user1, $user2) {
     return (int) $user->id === (int) $user1 || (int) $user->id === (int) $user2;
 });
+
+Broadcast::channel('inbox.{userId}', function ($user,$userId){
+    return (int) $user->id === (int) $userId;
+});

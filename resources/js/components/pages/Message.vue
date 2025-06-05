@@ -73,6 +73,23 @@ onUnmounted(() => {
   clearInterval(interval);
 });
 
+watch(isMobile, (newVal) => { //watch for checking the changes in variable isMobile
+  if (!newVal) {  
+    isToggled.value = false;
+  } else {
+    isToggled.value = true;
+  }
+});
+
+watch(() => authStore.getUser?.id, (id) => {
+  if (id) {
+    window.Echo.private(`inbox.${id}`)
+      .listen('MessageSent', async (e) => {
+        await fetchInbox();
+      });
+  }
+}, { immediate: true });
+
 watch(() => route.params.username, (newUsername) => {
   if (newUsername && isNewMessage.value == false) {
     fetchMessages(newUsername);
@@ -88,14 +105,6 @@ watch(receiver,(newVal) => { //monitoring the conversation partner
   .listen('MessageSent', (e) => {
       messages.value.push(e);
   });
-});
-
-watch(isMobile, (newVal) => { //watch for checking the changes in variable isMobile
-  if (!newVal) {  
-    isToggled.value = false;
-  } else {
-    isToggled.value = true;
-  }
 });
 
 function backToInbox(){ //for mobile view

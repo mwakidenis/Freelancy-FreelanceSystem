@@ -36,9 +36,16 @@ class MessageSent implements ShouldBroadcast
     {
         $ids = [$this->message->sender_id, $this->message->recipient_id];
         sort($ids);
-        return [
-            new PrivateChannel("chat.{$ids[0]}.{$ids[1]}"),
-        ];
+
+        $channels = [];
+        $channels[] = new PrivateChannel("chat.{$ids[0]}.{$ids[1]}");
+        $channels[] = new PrivateChannel("inbox.{$this->message->recipient_id}");
+
+        if ($this->message->recipient_id !== $this->message->sender_id) {
+            $channels[] = new PrivateChannel("inbox.{$this->message->sender_id}");
+        }
+
+        return $channels;
     }
 
 
