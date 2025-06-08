@@ -19,6 +19,7 @@ const now = ref(new Date());
 let interval;
 const isMobile = ref(window.innerWidth < 768);
 const isToggled = ref(false);
+const isLoading = ref(false);  //loader
 
 //backend fetches and variables
 const inbox = ref([null]);
@@ -31,25 +32,44 @@ const isRecentContactsClicked = ref(false);
 const messageInput = ref('');
 const messageInputRef = ref(null);
 const isNewMessage = ref(false);
-const isLoading = ref(false);
+const sendNewMessage = ref(false);
+
+//error variables
+const isInboxError = ref(false); //in case of server errors 5xx
 
 onMounted(async () => {
   await fetchInbox();
-
-  if (isMobile.value == false){
-    username.value = username.value != null ? username.value : inbox.value?.[0]?.username;
-    await fetchMessages(username.value);
-    router.replace({
-        params: {
-            username: username.value
+ 
+  if (isMobile.value == true){
+    router.push({name:route.name});
+  } else { 
+    if (route.name === 'new-message'){ 
+      username.value = null;
+      isNewMessage.value = true;
+    } else { 
+      if (inbox.value.length > 0) {
+        if (route.params.username) {
+          username.value = route.params.username;
+          if (!hasConversationWith(route.params.username)){
+            isNewMessage.value = true;
+          }
+        } else {
+          username.value = inbox.value?.[0]?.username;
         }
-    });
-  }
+          router.replace({
+              params: {
+                  username: username.value
+              }
+          });
+        await fetchMessages(username.value);
+      } else {
+        if (route.params.username) {
+          username.value = route.params.username;
+          isNewMessage.value = true;
+        }
+      }
 
-  if (route.name === 'new-message'){
-    console.log("new message");
-    username.value = null;
-    isNewMessage.value = true;
+    }
   }
 
   //ui resize
@@ -81,7 +101,7 @@ watch(isMobile, (newVal) => { //watch for checking the changes in variable isMob
   }
 });
 
-watch(() => authStore.getUser?.id, (id) => {
+watch(() => authStore.getUser?.id, (id) => { //watch for new messages sent to update inbox 
   if (id) {
     window.Echo.private(`inbox.${id}`)
       .listen('MessageSent', async (e) => {
@@ -90,11 +110,11 @@ watch(() => authStore.getUser?.id, (id) => {
   }
 }, { immediate: true });
 
-watch(() => route.params.username, (newUsername) => {
+watch(() => route.params.username, (newUsername) => { //watch for username change to update messages
   if (newUsername && isNewMessage.value == false) {
     fetchMessages(newUsername);
   }
-});
+}, {immediate:true});
 
 watch(receiver,(newVal) => { //monitoring the conversation partner
   const ids = [sender?.value.id, receiver?.value.id].sort((a, b) => a - b);
@@ -132,7 +152,17 @@ function formatInboxTime(sent) { //formats time elapsed when the message was sen
   return sent ? moment.utc(sent).local().fromNow() : ''
 }
 
-const sendMessage = async () => {
+const writeNewMessage = () => { //write new message to open "to" panel right
+  username.value = null;
+  isNewMessage.value = true;
+  sendNewMessage.value = true;
+  router.push('/inbox/new');
+  if (isMobile) {
+    isToggled.value = true;
+  }
+}
+
+const sendMessage = async () => { //form method to send api post to send new message
   try {
     const response = await api.post(`/message/inbox/${username.value}`,
       {
@@ -145,28 +175,14 @@ const sendMessage = async () => {
   } catch (error) {
     console.error("Error sending message:", error);
   } finally {
+    isNewMessage.value = false;
+    sendNewMessage.value = false;
     messageInput.value = null;
+    // fetchMessages(username.value);
   }
 };
- 
-const writeNewMessage = () => {
-  username.value = null;
-  isNewMessage.value = true;
-  router.push('/inbox/new');
-  if (isMobile) {
-    isToggled.value = true;
-  }
-}
 
-const switchMessages = (usernameInput) => {
-  isNewMessage.value = false;
-  recentContacts.value = [];
-  isRecentContactsClicked.value = false;
-  username.value = usernameInput;
-  router.push({ name: 'inbox', params: { username: usernameInput } });
-}
-
-async function handleSelectRecentContacts(){
+const handleSelectRecentContacts = async() => { //opens the box for recent contacts
   if (isRecentContactsClicked.value == false){
     isRecentContactsClicked.value = true;
     await fetchRecentContacts();
@@ -175,40 +191,62 @@ async function handleSelectRecentContacts(){
     recentContacts.value = [];
   }
 }
+ 
+const recentContactsClick = (usernameInput) => { //click user within recent contacts
+  username.value = usernameInput;
+  isRecentContactsClicked.value = false;
+  fetchMessages(usernameInput);
+  sendNewMessage.value = false;
+}
 
-async function fetchInbox() {
+const switchMessages = (usernameInput) => {//switching of messages through inbox
+  messages.value = [];
+  isNewMessage.value = false;
+  recentContacts.value = [];
+  isRecentContactsClicked.value = false;
+  username.value = usernameInput;
+  router.push({ name: 'inbox', params: { username: usernameInput } });
+}
+
+const hasConversationWith = (usernameInput) => { //checks if logged user has existing convo with user
+  return inbox.value.some(conv => conv.username === usernameInput);
+}
+
+async function fetchInbox() { //fetches the logged in user's inbox
   try {
     const response = await api.get('/message/inbox',{withCredentials:true});
     inbox.value = response.data.data;
   } catch (error){
+    isInboxError.value = true;
     console.error(error);
+  } finally {
+    if (inbox.value.length <= 0 ) {
+      isInboxError.value = true;
+    }
   }
 }
 
-async function fetchMessages(user){
-  const isValid = ref(false);
+async function fetchMessages(user){ //fetches the message between logged user and username
   messages.value = [];
   isLoading.value = true;
+  var isUsernameInvalid = ref(true);
   try {
     const response = await api.get(`/message/inbox/${user}`,{withCredentials:true});
     messages.value = response.data.data;
     username.value = user;
     fetchUser(user);
-    isValid.value = true;
+    isUsernameInvalid.value = false;
   } catch (error) {
-    if (error.status === 404){
-      isLoading.value = true;
-    }
     console.error(error);
   } finally {
-    if (isValid.value == true){
+    if (isUsernameInvalid.value == false) {
       isLoading.value = false;
     }
     isToggled.value = isMobile ? true : false;
   }
 }
 
-async function fetchUser(user){
+async function fetchUser(user){ //fetches the recipient 
   try{
     const response = await api.get(`/profile/${user}`);
     receiver.value = response.data.data;
@@ -217,7 +255,7 @@ async function fetchUser(user){
   }
 }
 
-async function fetchRecentContacts(){
+async function fetchRecentContacts(){ //fetches recent contacts of the logged in user
   try{
     const response = await api.get('/message/recent-contacts');
     recentContacts.value = response.data.data;
@@ -244,18 +282,18 @@ async function fetchRecentContacts(){
         <SquarePen @click="writeNewMessage" class="cursor-pointer" />
       </div>
     </div>
-
+   
     <ul class="overflow-y-auto max-h-[calc(100vh-112px)]">
 
       <li v-if="isNewMessage"
         class="p-4 border-b border-gray-300 cursor-pointer flex gap-3 bg-gray-100">
         <CircleUserRound class="w-12 h-12"/>
         <div class="flex flex-col mt-2 w-full">
-          <div class="font-bold">New Message</div>
+          <div class="font-bold">New Message to {{ username }}</div>
         </div>
       </li>
       
-      <li v-for="(inboxMessage,index) in inbox" @click="switchMessages(inboxMessage?.username)"
+      <li v-if="inbox.length > 0" v-for="(inboxMessage,index) in inbox" @click="switchMessages(inboxMessage?.username)"
         class="p-4 border-b border-gray-300 cursor-pointer flex gap-3 hover:bg-gray-100"
         :class="{'bg-gray-100' : username == inboxMessage?.username && !isNewMessage }">
         <CircleUserRound class="w-12 h-12"/>
@@ -267,7 +305,12 @@ async function fetchRecentContacts(){
           </div>
         </div>
       </li>
+
+      <li v-else> 
+        <p v-if="!isNewMessage" class="text-gray-300 text-center mt-4">No messages yet.</p>
+      </li>
     </ul>
+
   </div>
 
   <!-- Right: Chat window -->
@@ -282,19 +325,19 @@ async function fetchRecentContacts(){
         'block': isMobile && isToggled,
         'hidden': !isMobile || !isToggled,
       }"/>
-
-
-      <div v-if="!isLoading">
+ 
+      <div v-if="!isInboxError || isNewMessage || username">
         <div v-if="isNewMessage">
           <div class="flex justify-content-center gap-5">
             <div class="font-bold">To:</div> 
-            <div class="border border-gray-300 w-60 h-8 cursor-pointer rounded" @click="handleSelectRecentContacts">
-              <div v-if="isRecentContactsClicked" 
-                class="relative border border-gray-300 w-60 min-h-auto max-h-60 bg-gray-50 mt-7.5 z-40 text-xs flex flex-col overflow-y-auto space-y-1">
-                <div class="font-bold p-2">Recent contacts</div>
-                <div v-for="(contact,index) in recentContacts" class="border-t border-gray-300 p-2 hover:bg-gray-300" @click="switchMessages(contact?.username)">
-                  {{ contact?.username }}
-                </div>
+            <div v-if="!username" class="border border-gray-300 w-60 h-8 cursor-pointer rounded" @click="handleSelectRecentContacts"></div>
+            <div v-else class="cursor-pointer" @click="handleSelectRecentContacts">{{ username }}</div>
+
+            <div v-if="isRecentContactsClicked" 
+              class="absolute border border-gray-300 w-60 min-h-auto max-h-60 bg-gray-50 mt-7.5 z-40 text-xs flex flex-col overflow-y-auto space-y-1 ml-10.5">
+              <div class="font-bold p-2">Recent contacts</div>
+              <div v-for="(contact,index) in recentContacts" class="border-t border-gray-300 p-2 hover:bg-gray-300" @click="recentContactsClick(contact?.username)">
+                {{ contact?.username }}
               </div>
             </div>
           </div>
@@ -307,31 +350,25 @@ async function fetchRecentContacts(){
 
     </div>
 
-    <!-- Scrollable messages -->
-    <div v-if="!isLoading" class="relative flex-1 p-4 overflow-y-auto space-y-2 max-h-[calc(100vh-160px)]">
+    <div v-if="!isLoading" class="flex flex-col flex-1 z-10">
+      <!-- Scrollable messages -->
+      <div v-if="username" class="relative flex-1 p-4 overflow-y-auto space-y-2 max-h-[calc(100vh-160px)]">
 
-      <div v-if="!isNewMessage" v-for="(message,index) in messages">
-        <div v-if="message?.sender == username">
-          <!-- User 1 -->
-          <div class="bg-blue-100 p-2 rounded max-w-sm">{{message?.message}}</div>
+        <div v-for="(message,index) in messages">
+          <div v-if="message?.sender == username">
+            <!-- User 1 -->
+            <div class="bg-blue-100 p-2 rounded max-w-sm">{{message?.message}}</div>
+          </div>
+          <div v-else class="ml-auto text-right">
+            <!-- User 2 -->
+            <div class="bg-gray-200 p-2 rounded max-w-sm ml-auto text-right">{{message?.message}}</div>
+          </div>
         </div>
-        <div v-else class="ml-auto text-right">
-          <!-- User 2 -->
-          <div class="bg-gray-200 p-2 rounded max-w-sm ml-auto text-right">{{message?.message}}</div>
-        </div>
+
       </div>
 
-    </div>
-
-    <div v-if="isLoading" class="w-full h-full">
-      <div class="w-full h-full flex justify-center items-center">
-        <clip-loader :loading="loading" color="#2b7fff" :size="size"></clip-loader>
-      </div>
-
-    </div>
-    <div v-else>
       <!-- Chat input fixed at bottom -->
-      <div v-if="!isNewMessage" class="flex items-center gap-2 p-4">
+      <div v-if="username" class="flex items-center gap-2 p-4">
         <textarea
           class="border border-gray-300 p-2 rounded w-full min-h-[3rem] resize-none overflow-hidden"
           rows="1"
@@ -342,7 +379,11 @@ async function fetchRecentContacts(){
         <SendHorizonal class="text-blue-500 cursor-pointer" @click = "sendMessage"/>
       </div>
     </div>
+    <div v-else class="w-full h-full flex justify-center items-center">
+      <clip-loader :loading="loading" color="#2b7fff" :size="size"></clip-loader>
+    </div>
 
   </div>
+  
 </div>
 </template>

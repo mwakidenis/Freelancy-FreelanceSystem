@@ -44,7 +44,9 @@ async function fetchProfile(){
                             <CircleUserRound class="w-24 h-24 mx-auto"/>
                         </div>
                         <div v-if="authStore.isAuthenticated" class="mx-4">
-                            <Button class="w-full" name="Message"/>
+                            <router-link :to="{name:'inbox', params: {username:user?.username}}">
+                                <Button class="w-full" name="Message"/>
+                            </router-link>
                         </div>
                         <div class="font-bold">
                             <p class="text-xl">{{user?.name}}</p>
