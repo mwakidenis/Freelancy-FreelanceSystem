@@ -19,6 +19,7 @@ import ClientViewSingleProject from "../components/pages/Client/ViewProjectSingl
 import ClientViewProposals from "../components/pages/Client/ViewProposals.vue";
 // FOR PROFILE MODULE 
 import ViewProfile from "../components/pages/Profile/ViewProfile.vue";
+import EditProfile from "../components/pages/Profile/EditProfile.vue";
 // FOR MESSAGE MODULE
 import Message from "../components/pages/Message.vue";
 
@@ -60,6 +61,11 @@ const routes = [
                 path: '/profile/:username',
                 component: ViewProfile,
                 name: "view-profile"
+            },
+            {
+                path: '/profile/edit',
+                component: EditProfile,
+                name: "edit-profile"
             },
             // {
             //     path: '/:username/message',

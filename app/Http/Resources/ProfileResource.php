@@ -28,6 +28,7 @@ class ProfileResource extends JsonResource
             'username' => $this->username,
             'user_type' => $this->role,
             'date_registered' => $this->created_at,
+            'email_verified' => $this->email_verified_at,
             'brief_description' => $profile ?? null,
             'educational_attainment' => $profile ?? null,
             'work_experience' => $profile ?? null,

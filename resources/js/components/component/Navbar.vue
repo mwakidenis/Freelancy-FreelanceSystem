@@ -16,6 +16,9 @@ const authStore = useAuthStore();
             <div v-if="authStore.isClient">
                 <router-link :to="{name:'client-view-projects'}">Projects</router-link>
             </div>
+            <router-link :to="{name:'edit-profile'}">
+                Profile
+            </router-link>
             <p>Hi {{ authStore.getUserName }}</p>
             <p class="cursor-pointer" @click="authStore.logout">Logout</p>
         </div>

@@ -10,10 +10,20 @@ use App\Models\{User};
 // use Illuminate\Support\Str;
 use Illuminate\Auth\Events\Registered;
 use App\Mail\{CustomEmailVerification};
+use App\Http\Resources\{ProfileResource};
 use DB,Str,Mail;
 
 class AuthController extends Controller
 {
+    public function __construct(){
+        $this->response = [
+            'msg' => 'Invalid',
+            'status' => false,
+            'status_code' => 'INVALID'
+        ];
+        $this->response_code = 400;
+    }
+
     public function auth(){
         $credentials = request(['email','password']);
         
@@ -42,22 +52,17 @@ class AuthController extends Controller
     }
 
     public function getUser()
-    {
-        //AUTOMATIC 
-        //while the parseToken automatically detects the token from header,cookie etc...
-        // try {
-        //     if (! $user = JWTAuth::parseToken()->authenticate()) {
-        //         return response()->json(['error' => 'User not found'], 404);
-        //     }
-        // } catch (JWTException $e) {
-        //     return response()->json(['error' => 'Invalid token'], 400);
-        // }
-
-        //MANUAL    
+    {   
         try {
             $token = Cookie::get('auth_token'); 
             $user = JWTAuth::setToken($token)->authenticate(); //setToken manually sets the token (in this case from cookie)
-            return response()->json($user);
+            $this->response = [
+                'msg' => 'User Profile',
+                'status' => true,
+                'status_code' => 'USER_PROFILE',
+            ] + ProfileResource::make($user)->response()->getData(true);
+            $this->response_code = 200;
+            return response()->json($this->response,$this->response_code);
         } catch (\Exception $e){
             return response()->json(['message'=>"Unauthorized"],401);
         }

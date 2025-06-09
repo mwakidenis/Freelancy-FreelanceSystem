@@ -111,6 +111,8 @@ Route::group(['prefix'=>'proposals','as'=>'proposals.','namespace'=>'App\Http\Co
 
 Route::group(['prefix'=>'profile','as'=>'profile.','namespace'=>'App\Http\Controllers'], function() {
     Route::get('/{username?}',['uses'=>'ProfileController@view']);
+
+    Route::post('/edit/work-experience', ['uses'=>'ProfileController@update_work']);
 });
 
 Route::group(['prefix'=>'message','as'=>'message.','namespace'=>'App\Http\Controllers'], function() {

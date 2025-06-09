@@ -29,7 +29,7 @@ export const useAuthStore = defineStore("auth", {
           withCredentials: true,
         });
         this.user = response.data;
-        // console.log("user data is:",this.user);
+        console.log("user data is:",this.user);
         return response.data;
       } catch (error) {
         this.user = null;
@@ -51,11 +51,11 @@ export const useAuthStore = defineStore("auth", {
   },
   getters: {
     isAuthenticated: (state) => !!state.user,
-    getUser: (state) => state.user,
-    getUserRole: (state) => state.user?.role,
-    getUserName: (state) => state.user?.name,
-    isFreelancer: (state) => state.user?.role === 'freelancer',
-    isClient: (state) => state?.user.role === 'client',
+    getUser: (state) => state.user?.data,
+    getUserRole: (state) => state.user?.data.role,
+    getUserName: (state) => state.user?.data.name,
+    isFreelancer: (state) => state.user?.data.role === 'freelancer',
+    isClient: (state) => state?.user.data.role === 'client',
     // isEmailVerified: (state) => state.user?.email_verified === true, // ✅ Check email verification
   },
   persist: true, // Enable Pinia persist
