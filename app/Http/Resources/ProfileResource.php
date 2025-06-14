@@ -29,10 +29,10 @@ class ProfileResource extends JsonResource
             'user_type' => $this->role,
             'date_registered' => $this->created_at,
             'email_verified' => $this->email_verified_at,
-            'brief_description' => $profile ?? null,
-            'educational_attainment' => $profile ?? null,
-            'work_experience' => $profile ?? null,
-            'skills' => $profile ?? null
+            'brief_description' => $profile ? $profile->description : null,
+            'educational_attainment' => $profile ? $profile->educational_attainment : null,
+            'work_experience' => $profile ? $profile->work_experience : null,
+            'skills' => $profile ? $profile->skills : null
         ], $additional);
     }
 }

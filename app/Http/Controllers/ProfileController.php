@@ -48,21 +48,15 @@ class ProfileController extends Controller
             if (!$profile){
                 $profile = new Profile();
             }
-            $current_work_experience = $profile ? 
-                                            $profile->work_experience 
-                                            ? json_decode($profile->work_experience,true) 
-                                            : [] 
-                                        : [];
-            $work_experience = array_merge($current_work_experience,$request->input('work_experience'));
-              
             $profile->user_id = $user->id;
-            $profile->work_experience = json_encode($work_experience,true);
+            $profile->work_experience = json_encode(json_decode($request->input('work_experience'),true));
             $profile->save();
             DB::commit();
             $this->response = [
                 'msg' => 'Work Experience updated',
                 'status' => true,
-                'status_code' =>  'WORK_EXPERIENCE_UPDATED'
+                'status_code' =>  'WORK_EXPERIENCE_UPDATED',
+                'data' => $profile->work_experience
             ];
             $this->response_code = 200;
             return response()->json($this->response,$this->response_code);

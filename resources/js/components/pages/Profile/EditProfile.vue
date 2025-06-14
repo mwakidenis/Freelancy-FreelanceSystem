@@ -1,5 +1,6 @@
 <script setup>
-import { ref,onMounted,onUnmounted } from 'vue';
+import { ref,onMounted,watch } from 'vue';
+import api from '../../../api';
 import { useAuthStore } from '../../../authStore';
 import { CircleUserRound,Pencil, Save, CircleX, CircleMinus, Plus} from 'lucide-vue-next';
 import moment from 'moment';
@@ -12,18 +13,30 @@ const objectInput = ref('');
 const objectInputRef = ref(null);
 const isEditOpen = ref(false);
 
-const workExperiences = ref(['']);
+//initial value holders
+const description = ref('');
+const skills = ref (['']);
+const educationalAttainment = ref(['']);
+const workExperiences = ref(['']); 
+
+const tempEditInput = ref(['']); //edit value holders
 
 onMounted(async () => {
-    user.value = authStore.getUser;
     //message input box
-    autoResize();
-
-
+    // autoResize();
+    await fetchProfile(); 
 });
 
 // onUnmounted(() => {
 //     window.removeEventListener('keydown', escapeKeyEvent)
+// });
+
+// watch(() => workExperiences.value.length,
+//         (length) => {
+//     console.log("work experiences input value: ", workExperienceInput.value);
+//     if (length) {
+//         console.log("work experiences length updated");4
+//     }
 // });
 
 
@@ -37,26 +50,59 @@ function autoResize() {
   el.style.height = Math.min(newHeight, maxHeight) + 'px'
 }
 
-// function escapeKeyEvent(event){
-//     alert("i am pressed");
-// }
-
 const toggleModal = (edit) => {
     isEditOpen.value = edit == 'close' ? false : true;
     objectToEdit.value = edit;
-    if (edit == 'workExperience'){
-        //
+
+    if (edit == 'work experience'){
+        var temp = user.value.work_experience;
+        tempEditInput.value = JSON.parse(temp);
+    } 
+    if (edit == 'close'){
+        tempEditInput.value = '';
+    }
+}
+
+const saveChanges = async (edit) => {
+    //REFACTOR JUST A SINGLE METHOD AND API CALL WITHOUT MULTIPLE SWITCH CASE STATEMENTS
+    switch(edit){
+        case "work experience":
+            const formData = new FormData();
+            formData.append('work_experience',JSON.stringify(tempEditInput.value));
+            try{
+            const response = await api.post("/profile/edit/work-experience", formData, {withCredentials:true});
+            tempEditInput.value = JSON.parse(response.data.data); //for updating the value in modal
+            workExperiences.value = JSON.parse(response.data.data);  //for updating the values outside
+            user.value.work_experience = response.data.data; //for updating the profile value 
+            } catch (error){
+                console.error();
+            }
+            break;
+        default:
+            break;
     }
 }
 
 const addWorkExperienceInput = () => {
-    workExperiences.value.push('');
+    tempEditInput.value.push({"company":"","position":"","year_start":null,"year_end":null});   
 }
 
 const removeExperienceInput = (index) => {
-    console.log("before remove array value: ", workExperiences.value);
-    console.log("index to remove: ", index);
-    workExperiences.value.splice(index,1);
+    tempEditInput.value.splice(index['index'],1);
+}
+
+async function fetchProfile(){
+    try {
+        const response = await api.get(`/profile/${authStore?.getUser?.username}`);
+        user.value = response.data.data;
+
+        description.value = response.data.data.brief_description;
+        skills.value = response.data.data.skills;
+        educationalAttainment.value = response.data.data.educational_attainment;
+        workExperiences.value = JSON.parse(response.data.data.work_experience);
+    } catch (error){
+        console.error(error);
+    }
 }
 </script>
 
@@ -92,7 +138,7 @@ const removeExperienceInput = (index) => {
                         Description <span><Pencil class="w-3 cursor-pointer text-gray-500" @click="toggleModal('description')"/></span> 
                     </p>
                     <p class="text-sm text-gray-500">
-                        {{ user?.brief_description ?? "No information yet." }}
+                        {{ description ?? "No information yet." }}
                     </p>
                 </div>
                 <div class="border-b border-gray-300 flex flex-col gap-4 p-4">
@@ -100,7 +146,7 @@ const removeExperienceInput = (index) => {
                         Skills <span><Pencil class="w-3 cursor-pointer text-gray-500" @click="toggleModal('skills')"/></span> 
                     </p>
                     <p class="text-sm text-gray-500">
-                        {{ user?.skills ?? "No information yet." }}
+                        {{ skills ?? "No information yet." }}
                     </p>  
                 </div>
                 <div class="border-b border-gray-300 flex flex-col gap-4 p-4">
@@ -108,16 +154,19 @@ const removeExperienceInput = (index) => {
                         Educational attainment <span><Pencil class="w-3 cursor-pointer text-gray-500" @click="toggleModal('educational attainment')"/></span>
                     </p>
                     <p class="text-sm text-gray-500">
-                        {{ user?.educational_attainment ?? "No information yet." }}
+                        {{ educationalAttainment ?? "No information yet." }}
                     </p>  
                 </div>
                 <div class="flex flex-col gap-4 p-4">
                     <p class="font-bold text-xl flex items-center gap-2">
                         Work experience <span><Pencil class="w-3 cursor-pointer text-gray-500" @click="toggleModal('work experience')"/></span>
                     </p>
-                    <p class="text-sm text-gray-500">
-                        {{ user?.work_experience ?? "No information yet." }}
-                    </p>  
+                    <div v-if="workExperiences.length > 0" class="text-sm text-gray-500">
+                        <div v-for="(work) in workExperiences">
+                            <span>{{ work.company }}</span> - <span>{{ work.position }}</span> ({{ work.year_start }} - {{ work.year_end }})
+                        </div>
+                    </div>
+                    <div v-else class="text-sm text-gray-500">nahwp</div>
                 </div>
             </div>
 
@@ -169,26 +218,25 @@ const removeExperienceInput = (index) => {
                         </div>
                     </div>
                     <div v-else-if="objectToEdit == 'work experience'">
-                        <div v-for="(count,index) in workExperiences" :key="{index}" class="grid grid-cols-12 gap-4 text-center my-2">
-                            {{ index }}
+                        <div v-for="(work,index) in tempEditInput" :key="index" class="grid grid-cols-12 gap-4 text-center my-2">
                             <div class="col-span-4 flex flex-col items-start gap-2">
-                                <p>Company</p>
-                                <input type="text" class="border border-gray-300 rounded w-full" />
+                                <p class="font-medium">Company</p>
+                                <input type="text" v-model="tempEditInput[index].company" class="border border-gray-300 rounded w-full" />
                             </div>
                             <div class="col-span-3 flex flex-col items-start gap-2">
-                                <p>Position</p>
-                                <input type="text" class="border border-gray-300 rounded w-full" />
+                                <p class="font-medium">Position</p>
+                                <input type="text" v-model="tempEditInput[index].position" class="border border-gray-300 rounded w-full" />
                             </div>
                             <div class="col-span-2 flex flex-col items-start gap-2">
-                                <p>Year started</p>
-                                <input type="text" class="border border-gray-300 rounded w-full" />
+                                <p class="font-medium">Year started</p>
+                                <input type="number" v-model="tempEditInput[index].year_start" class="border border-gray-300 rounded w-full" />
                             </div>
                             <div class="col-span-2 flex flex-col items-start gap-2">
-                                <p>Year ended</p>
-                                <input type="text" class="border border-gray-300 rounded w-full" />
+                                <p class="font-medium">Year ended</p>
+                                <input type="number" v-model="tempEditInput[index].year_end" class="border border-gray-300 rounded w-full" />
                             </div>
                             <div class="col-span-1 flex items-center mt-7 justify-center">
-                                <CircleMinus v-if="index != 0" @click="removeExperienceInput({index})" class="text-red-500 cursor-pointer hover:opacity-70"/>
+                                <CircleMinus v-if="tempEditInput.length > 1" @click="removeExperienceInput({index})" class="text-red-500 cursor-pointer hover:opacity-70"/>
                             </div>
                         </div>
                         <div class="w-full mt-8">
@@ -205,7 +253,7 @@ const removeExperienceInput = (index) => {
 
 
                 <div class="ml-auto flex gap-4  relative fixed bottom-0 ">
-                    <button 
+                    <button @click="saveChanges(objectToEdit)"
                         class="bg-green-500 cursor-pointer text-white w-24 h-12 rounded-xl hover:opacity-80 ml-auto
                             flex items-center justify-center gap-2">
                         <span><Save class="w-4 h-4"/></span> Save
