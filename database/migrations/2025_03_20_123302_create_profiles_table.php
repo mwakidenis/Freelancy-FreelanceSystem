@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('profiles', function (Blueprint $table) {
             $table->id('id');
             $table->string('user_id');
-            $table->string('description')->nullable();
-            $table->string('educational_attainment')->nullable();
+            $table->text('description')->nullable();
+            $table->text('educational_attainment')->nullable();
             $table->text('work_experience')->nullable();
-            $table->string('skills')->nullable();
+            $table->text('skills')->nullable();
             $table->timestamps();
         });
     }

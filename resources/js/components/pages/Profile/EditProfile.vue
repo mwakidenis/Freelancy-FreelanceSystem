@@ -54,7 +54,7 @@ const toggleModal = (edit) => {
     isEditOpen.value = edit == 'close' ? false : true;
     objectToEdit.value = edit;
 
-    if (edit == 'work experience'){
+    if (edit == 'work_experience'){
         var temp = user.value.work_experience;
         tempEditInput.value = JSON.parse(temp);
     } 
@@ -63,23 +63,65 @@ const toggleModal = (edit) => {
     }
 }
 
-const saveChanges = async (edit) => {
+const saveChanges = async () => {
     //REFACTOR JUST A SINGLE METHOD AND API CALL WITHOUT MULTIPLE SWITCH CASE STATEMENTS
-    switch(edit){
-        case "work experience":
-            const formData = new FormData();
-            formData.append('work_experience',JSON.stringify(tempEditInput.value));
-            try{
-            const response = await api.post("/profile/edit/work-experience", formData, {withCredentials:true});
-            tempEditInput.value = JSON.parse(response.data.data); //for updating the value in modal
-            workExperiences.value = JSON.parse(response.data.data);  //for updating the values outside
-            user.value.work_experience = response.data.data; //for updating the profile value 
-            } catch (error){
-                console.error();
-            }
-            break;
-        default:
-            break;
+    // switch(edit){
+    //     case "work experience":
+    //         const formData = new FormData();
+    //         //instead of work_experience i can use tempEditInput also for the backend
+    //         formData.append('work_experience',JSON.stringify(tempEditInput.value));
+    //         try{
+    //         const response = await api.post("/profile/edit/work-experience", formData, {withCredentials:true});
+    //         console.log("response is : ", response);
+    //       //  tempEditInput.value = JSON.parse(response.data.data); //for updating the value in modal
+    //         //workExperiences.value = JSON.parse(response.data.data);  //for updating the values outside
+    //        // user.value.work_experience = response.data.data; //for updating the profile value 
+    //         } catch (error){
+    //             console.error();
+    //         }
+    //         break;
+    //     default:
+    //         break;
+    // }
+    //
+    const formData = new FormData();
+    formData.append('type',objectToEdit.value);
+    if (objectToEdit.value == 'description'){
+        formData.append('tempEditInput',tempEditInput.value);
+    } else {
+        formData.append('tempEditInput',JSON.stringify(tempEditInput.value));
+    }
+    try {
+        const response = await api.post(`profile/edit/update_profile`,formData,{withCredentials:true});
+        console.log("response is: ", response.data.data);
+
+        switch (objectToEdit.value){
+            case "description":
+                tempEditInput.value = response.data.data;
+                description.value = response.data.data; 
+                user.value.brief_description = response.data.data;  
+                break;
+            case "educational_attainment":
+                tempEditInput.value = JSON.parse(response.data.data);
+                educationalAttainment.value = JSON.parse(response.data.data); 
+                user.value.educational_attainment = response.data.data;  
+                break;
+            case "work_experience":
+                tempEditInput.value = JSON.parse(response.data.data);
+                workExperiences.value = JSON.parse(response.data.data); 
+                user.value.work_experience = response.data.data;  
+                break;
+            case "skills":
+                tempEditInput.value = JSON.parse(response.data.data);
+                skills.value = JSON.parse(response.data.data); 
+                user.value.skills = response.data.data;  
+                break;
+            default:
+                break;
+        }
+
+    } catch (error){
+        console.error(error);
     }
 }
 
@@ -151,7 +193,7 @@ async function fetchProfile(){
                 </div>
                 <div class="border-b border-gray-300 flex flex-col gap-4 p-4">
                     <p class="font-bold text-xl flex items-center gap-2">
-                        Educational attainment <span><Pencil class="w-3 cursor-pointer text-gray-500" @click="toggleModal('educational attainment')"/></span>
+                        Educational attainment <span><Pencil class="w-3 cursor-pointer text-gray-500" @click="toggleModal('educational_attainment')"/></span>
                     </p>
                     <p class="text-sm text-gray-500">
                         {{ educationalAttainment ?? "No information yet." }}
@@ -159,7 +201,7 @@ async function fetchProfile(){
                 </div>
                 <div class="flex flex-col gap-4 p-4">
                     <p class="font-bold text-xl flex items-center gap-2">
-                        Work experience <span><Pencil class="w-3 cursor-pointer text-gray-500" @click="toggleModal('work experience')"/></span>
+                        Work experience <span><Pencil class="w-3 cursor-pointer text-gray-500" @click="toggleModal('work_experience')"/></span>
                     </p>
                     <div v-if="workExperiences.length > 0" class="text-sm text-gray-500">
                         <div v-for="(work) in workExperiences">
@@ -201,7 +243,7 @@ async function fetchProfile(){
                             </div>
                         </div>
                     </div>
-                    <div v-else-if="objectToEdit == 'educational attainment'">
+                    <div v-else-if="objectToEdit == 'educational_attainment'">
                         <div class="flex justify-evenly gap-20">
                             <div class="flex flex-col w-full gap-2">
                                 <p>University</p>
@@ -217,7 +259,7 @@ async function fetchProfile(){
                             </div>
                         </div>
                     </div>
-                    <div v-else-if="objectToEdit == 'work experience'">
+                    <div v-else-if="objectToEdit == 'work_experience'">
                         <div v-for="(work,index) in tempEditInput" :key="index" class="grid grid-cols-12 gap-4 text-center my-2">
                             <div class="col-span-4 flex flex-col items-start gap-2">
                                 <p class="font-medium">Company</p>
