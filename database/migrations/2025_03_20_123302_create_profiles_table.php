@@ -19,6 +19,7 @@ return new class extends Migration
             $table->text('work_experience')->nullable();
             $table->text('skills')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

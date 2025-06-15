@@ -19,7 +19,7 @@ const authStore = useAuthStore();
             <router-link :to="{name:'edit-profile'}">
                 Profile
             </router-link>
-            <p>Hi {{ authStore.getUserName }}</p>
+            <p>Hi {{ authStore.getUser.name }}</p>
             <p class="cursor-pointer" @click="authStore.logout">Logout</p>
         </div>
         <div v-else>

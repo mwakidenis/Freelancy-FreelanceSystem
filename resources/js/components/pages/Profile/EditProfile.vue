@@ -21,6 +21,8 @@ const workExperiences = ref(['']);
 
 const tempEditInput = ref(['']); //edit value holders
 
+const skillInput = ref('');
+
 onMounted(async () => {
     //message input box
     // autoResize();
@@ -53,10 +55,26 @@ function autoResize() {
 const toggleModal = (edit) => {
     isEditOpen.value = edit == 'close' ? false : true;
     objectToEdit.value = edit;
-
+    //will check if i have to use temp var to assign parsed data
+    //i think i can simplify this into two ifs only!!!
+    if (edit == 'description'){
+        var temp = user.value.brief_description;
+        tempEditInput.value = temp;
+    } 
+    if (edit == 'educational_attainment'){
+        var temp = user.value.educational_attainment;
+        if (temp) tempEditInput.value = JSON.parse(temp);
+        else tempEditInput.value = [];
+    } 
     if (edit == 'work_experience'){
         var temp = user.value.work_experience;
-        tempEditInput.value = JSON.parse(temp);
+        if (temp) tempEditInput.value = JSON.parse(temp);
+        else tempEditInput.value = [];
+    } 
+    if (edit == 'skills'){
+        var temp = user.value.skills;
+        if (temp) tempEditInput.value = JSON.parse(temp);
+        else tempEditInput.value = []; 
     } 
     if (edit == 'close'){
         tempEditInput.value = '';
@@ -93,7 +111,7 @@ const saveChanges = async () => {
     }
     try {
         const response = await api.post(`profile/edit/update_profile`,formData,{withCredentials:true});
-        console.log("response is: ", response.data.data);
+        console.log("response is: ", response);
 
         switch (objectToEdit.value){
             case "description":
@@ -133,6 +151,23 @@ const removeExperienceInput = (index) => {
     tempEditInput.value.splice(index['index'],1);
 }
 
+const addSkill = () => {
+    tempEditInput.value.push(skillInput.value);
+    skillInput.value = null;
+}
+
+const removeSkill = (index) => {
+    tempEditInput.value.splice(index,1);
+}
+
+const addEducationalAttainmentInput = () => {
+    tempEditInput.value.push({"university":"","program":"","year_graduated":null});   
+}
+
+const removeEducationalAttainmentInput = (index) => {
+    tempEditInput.value.splice(index['index'],1);
+}
+
 async function fetchProfile(){
     try {
         const response = await api.get(`/profile/${authStore?.getUser?.username}`);
@@ -140,8 +175,8 @@ async function fetchProfile(){
 
         description.value = response.data.data.brief_description;
         skills.value = response.data.data.skills;
-        educationalAttainment.value = response.data.data.educational_attainment;
-        workExperiences.value = JSON.parse(response.data.data.work_experience);
+        educationalAttainment.value = JSON.parse(response.data.data.educational_attainment) ?? [];
+        workExperiences.value = JSON.parse(response.data.data.work_experience) ?? [];
     } catch (error){
         console.error(error);
     }
@@ -208,7 +243,7 @@ async function fetchProfile(){
                             <span>{{ work.company }}</span> - <span>{{ work.position }}</span> ({{ work.year_start }} - {{ work.year_end }})
                         </div>
                     </div>
-                    <div v-else class="text-sm text-gray-500">nahwp</div>
+                    <div v-else class="text-sm text-gray-500">No information yet.</div>
                 </div>
             </div>
 
@@ -222,41 +257,63 @@ async function fetchProfile(){
         <div class="fixed inset-0 flex justify-center items-center z-50" @click.self="toggleModal('close')">
             <div class="bg-white w-3/5 h-4/5 p-6 rounded-lg shadow-lg flex flex-col gap-4 overflow-auto">
                 <div class="flex flex-col flex-1 gap-4">
-                    <p class="capitalize font-bold text-xl">{{ objectToEdit }}</p>
-                    <!-- <input type="text" -->
+                    <p class="capitalize font-bold text-xl">{{ objectToEdit.replace("_"," ") }}</p>
                     <hr/>
                     <div v-if="objectToEdit == 'description'">
                         <textarea
                         class="border border-gray-300 p-2 max-h-[400px] rounded w-full resize-none overflow-auto"
                         rows="10"
-                        @input="autoResize"
-                        ref="objectInputRef"
-                        v-model="objectInput"
+                        v-model="tempEditInput"
                         />
                     </div>
                     <div v-else-if="objectToEdit == 'skills'">
-                        <input type="text" class="border border-gray-300 rounded w-full h-8 mb-4"/>
-                        <div class="flex flex-wrap gap-4">
-                            <div class="bg-blue-500 text-white w-32 h-12 rounded-xl flex justify-center items-center p-4">
-                                <span class="mx-auto">Skill 1</span>
-                                <span class="ml-auto"><CircleX class="w-4 h-4 cursor-pointer"/></span>
+                        <div class="flex gap-4">
+                            <div class="flex flex-1">
+                                <input v-model="skillInput" type="text" class="border border-gray-300 rounded w-full h-8 mb-4"/>
+                            </div>
+                            <div class="w-12">
+                                <button @click="addSkill()"
+                                    class="border border-gray-300 text-gray-300 rounded flex items-center justify-center w-full h-8 cursor-pointer">
+                                    <Plus/>
+                                </button>
                             </div>
                         </div>
+                        
+                        <!-- v if check if skills array is empty or not -->
+                        <div v-if="tempEditInput.length > 0" class="flex flex-wrap gap-4">
+                            <!-- v for here -->
+                            <div v-for="(skill,index) in tempEditInput" :key="index" 
+                                class="bg-blue-500 text-white w-40 h-12 rounded-xl flex justify-center items-center text-center p-4"> 
+                                <span class="mx-auto">{{tempEditInput[index]}}</span>
+                                <span class="ml-auto"><CircleX class="w-4 h-4 cursor-pointer" @click="removeSkill(index)"/></span>
+                            </div>
+                        </div>
+                        <!-- if empty display No skills yet.  -->
+                         <div v-else class="text-gray-500 text-center">No skills yet.</div>
                     </div>
                     <div v-else-if="objectToEdit == 'educational_attainment'">
-                        <div class="flex justify-evenly gap-20">
-                            <div class="flex flex-col w-full gap-2">
-                                <p>University</p>
-                                <input type="text" class="border border-gray-300 rounded"/>
+                        <div v-for="(work,index) in tempEditInput" :key="index" class="grid grid-cols-12 gap-4 text-center my-2">
+                            <div class="col-span-4 flex flex-col items-start gap-2">
+                                <p class="font-medium">University</p>
+                                <input type="text" v-model="tempEditInput[index].university" class="border border-gray-300 rounded w-full" />
                             </div>
-                            <div class="flex flex-col w-full gap-2">
-                                <p>Program</p>
-                                <input type="text" class="border border-gray-300 rounded"/>
+                            <div class="col-span-4 flex flex-col items-start gap-2">
+                                <p class="font-medium">Program</p>
+                                <input type="text" v-model="tempEditInput[index].program" class="border border-gray-300 rounded w-full" />
                             </div>
-                            <div class="flex flex-col w-full gap-2">
-                                <p>Year graduated</p>
-                                <input type="text" class="border border-gray-300 rounded"/>
+                            <div class="col-span-3 flex flex-col items-start gap-2">
+                                <p class="font-medium">Year graduated</p>
+                                <input type="number" v-model="tempEditInput[index].year_graduated" class="border border-gray-300 rounded w-full" />
                             </div>
+                            <div class="col-span-1 flex items-center mt-7 justify-center">
+                                <CircleMinus v-if="tempEditInput.length > 1" @click="removeEducationalAttainmentInput({index})" class="text-red-500 cursor-pointer hover:opacity-70"/>
+                            </div>
+                        </div>
+                        <div class="w-full mt-8">
+                            <button @click="addEducationalAttainmentInput"
+                                class="border border-gray-300 text-gray-300 flex items-center justify-center w-full h-12 cursor-pointer">
+                                <Plus/>
+                            </button>
                         </div>
                     </div>
                     <div v-else-if="objectToEdit == 'work_experience'">
@@ -292,7 +349,6 @@ async function fetchProfile(){
                         Error
                     </div>
                 </div>
-
 
                 <div class="ml-auto flex gap-4  relative fixed bottom-0 ">
                     <button @click="saveChanges(objectToEdit)"

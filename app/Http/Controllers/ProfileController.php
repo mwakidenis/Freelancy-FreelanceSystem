@@ -161,34 +161,22 @@ class ProfileController extends Controller
             $profile = Profile::where('user_id',$user->id)->first();
             if (!$profile){
                 $profile = new Profile();
-                $profile->user_id = $user->id;
-                switch($type){
-                    case "description":
-                        $profile->description = $request->input('tempEditInput');
-                        break;
-                    case "educational_attainment":
-                        $profile->educational_attainment = json_encode(json_decode($request->input('tempEditInput'),true));
-                        break;
-                    case "work_experience":
-                        $profile->work_experience = json_encode(json_decode($request->input('tempEditInput'),true));
-                        break;
-                    case "skills":
-                        $profile->skills = json_encode(json_decode($request->input('tempEditInput'),true));
-                        break;
-                    default:
-                        break;
-                }
-                $profile->save();
-                DB::commit();
-                $this->response = [
-                    'msg' => 'Profile ' . str_replace("_", " ", $type) . ' has been updated.',
-                    'status' => true,
-                    'status_code' => 'PROFILE_' . strtoupper(str_replace("_"," ",$type)) . '_UPDATED.',
-                    'data' => "" //switch
-                ];
-                $this->response_code = 200;
-                return response()->json($this->response,$this->response_code);
             }
+            $profile->user_id = $user->id;
+            $profile->$type = $type == 'description' 
+                            ? $request->input('tempEditInput')
+                            : json_encode(json_decode($request->input('tempEditInput'),true));
+            
+            $profile->save();
+            DB::commit();
+            $this->response = [
+                'msg' => 'Profile ' . str_replace("_", " ", $type) . ' has been updated.',
+                'status' => true,
+                'status_code' => 'PROFILE_' . strtoupper(str_replace("_"," ",$type)) . '_UPDATED.',
+                'data' => $profile->$type
+            ];
+            $this->response_code = 200;
+            return response()->json($this->response,$this->response_code);
         } catch(\Exception $e){
             DB::rollback();
             $this->response = [
