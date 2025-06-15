@@ -112,11 +112,6 @@ Route::group(['prefix'=>'proposals','as'=>'proposals.','namespace'=>'App\Http\Co
 Route::group(['prefix'=>'profile','as'=>'profile.','namespace'=>'App\Http\Controllers'], function() {
     Route::get('/{username?}',['uses'=>'ProfileController@view']);
 
-    Route::post('/edit/description', ['uses'=>'ProfileController@update_description']);
-    Route::post('/edit/skills', ['uses'=>'ProfileController@update_skills']);
-    Route::post('/edit/educational-attainment', ['uses'=>'ProfileController@update_educational_attainment']);
-    Route::post('/edit/work-experience', ['uses'=>'ProfileController@update_work']);
-
     Route::post('/edit/update_profile',['uses'=>'ProfileController@update_profile']);
 });
 

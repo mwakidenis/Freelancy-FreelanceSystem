@@ -1,16 +1,15 @@
 <script setup>
-import { ref,onMounted,watch } from 'vue';
+import { ref,onMounted } from 'vue';
 import api from '../../../api';
 import { useAuthStore } from '../../../authStore';
-import { CircleUserRound,Pencil, Save, CircleX, CircleMinus, Plus} from 'lucide-vue-next';
+import { CircleUserRound,Pencil, Save, CircleX, CircleMinus, Plus, CircleCheck} from 'lucide-vue-next';
+import { ClipLoader } from 'vue-spinner/dist/vue-spinner.min.js'
 import moment from 'moment';
 
 const authStore = useAuthStore();
 
 const user = ref(null);
 const objectToEdit = ref(null);
-const objectInput = ref(''); 
-const objectInputRef = ref(null);
 const isEditOpen = ref(false);
 
 //initial value holders
@@ -19,136 +18,42 @@ const skills = ref (['']);
 const educationalAttainment = ref(['']);
 const workExperiences = ref(['']); 
 
-const tempEditInput = ref(['']); //edit value holders
+const tempEditInput = ref(['']); //edit value holders for description, educational attainment, work experience, and array of skill
+const skillInput = ref(''); //edit value for individual skill
 
-const skillInput = ref('');
+//modal config
+const savingMessage = ref('Save changes?');
+const isConfirmation = ref(false);
+const isLoading = ref(false);
+const isSaved = ref(false);
+const isError = ref(false);
 
 onMounted(async () => {
-    //message input box
-    // autoResize();
     await fetchProfile(); 
 });
-
-// onUnmounted(() => {
-//     window.removeEventListener('keydown', escapeKeyEvent)
-// });
-
-// watch(() => workExperiences.value.length,
-//         (length) => {
-//     console.log("work experiences input value: ", workExperienceInput.value);
-//     if (length) {
-//         console.log("work experiences length updated");4
-//     }
-// });
-
-
-function autoResize() {
-  const el = objectInputRef.value
-  el.style.height = 'auto'
-  
-  const newHeight = el.scrollHeight
-  const maxHeight = 400
-  
-  el.style.height = Math.min(newHeight, maxHeight) + 'px'
-}
 
 const toggleModal = (edit) => {
     isEditOpen.value = edit == 'close' ? false : true;
     objectToEdit.value = edit;
-    //will check if i have to use temp var to assign parsed data
-    //i think i can simplify this into two ifs only!!!
+
     if (edit == 'description'){
         var temp = user.value.brief_description;
         tempEditInput.value = temp;
-    } 
-    if (edit == 'educational_attainment'){
+    } else if (edit == 'educational_attainment'){
         var temp = user.value.educational_attainment;
         if (temp) tempEditInput.value = JSON.parse(temp);
         else tempEditInput.value = [];
-    } 
-    if (edit == 'work_experience'){
+    } else if (edit == 'work_experience'){
         var temp = user.value.work_experience;
         if (temp) tempEditInput.value = JSON.parse(temp);
         else tempEditInput.value = [];
-    } 
-    if (edit == 'skills'){
+    } else if (edit == 'skills'){
         var temp = user.value.skills;
         if (temp) tempEditInput.value = JSON.parse(temp);
         else tempEditInput.value = []; 
-    } 
-    if (edit == 'close'){
+    } else {
         tempEditInput.value = '';
     }
-}
-
-const saveChanges = async () => {
-    //REFACTOR JUST A SINGLE METHOD AND API CALL WITHOUT MULTIPLE SWITCH CASE STATEMENTS
-    // switch(edit){
-    //     case "work experience":
-    //         const formData = new FormData();
-    //         //instead of work_experience i can use tempEditInput also for the backend
-    //         formData.append('work_experience',JSON.stringify(tempEditInput.value));
-    //         try{
-    //         const response = await api.post("/profile/edit/work-experience", formData, {withCredentials:true});
-    //         console.log("response is : ", response);
-    //       //  tempEditInput.value = JSON.parse(response.data.data); //for updating the value in modal
-    //         //workExperiences.value = JSON.parse(response.data.data);  //for updating the values outside
-    //        // user.value.work_experience = response.data.data; //for updating the profile value 
-    //         } catch (error){
-    //             console.error();
-    //         }
-    //         break;
-    //     default:
-    //         break;
-    // }
-    //
-    const formData = new FormData();
-    formData.append('type',objectToEdit.value);
-    if (objectToEdit.value == 'description'){
-        formData.append('tempEditInput',tempEditInput.value);
-    } else {
-        formData.append('tempEditInput',JSON.stringify(tempEditInput.value));
-    }
-    try {
-        const response = await api.post(`profile/edit/update_profile`,formData,{withCredentials:true});
-        console.log("response is: ", response);
-
-        switch (objectToEdit.value){
-            case "description":
-                tempEditInput.value = response.data.data;
-                description.value = response.data.data; 
-                user.value.brief_description = response.data.data;  
-                break;
-            case "educational_attainment":
-                tempEditInput.value = JSON.parse(response.data.data);
-                educationalAttainment.value = JSON.parse(response.data.data); 
-                user.value.educational_attainment = response.data.data;  
-                break;
-            case "work_experience":
-                tempEditInput.value = JSON.parse(response.data.data);
-                workExperiences.value = JSON.parse(response.data.data); 
-                user.value.work_experience = response.data.data;  
-                break;
-            case "skills":
-                tempEditInput.value = JSON.parse(response.data.data);
-                skills.value = JSON.parse(response.data.data); 
-                user.value.skills = response.data.data;  
-                break;
-            default:
-                break;
-        }
-
-    } catch (error){
-        console.error(error);
-    }
-}
-
-const addWorkExperienceInput = () => {
-    tempEditInput.value.push({"company":"","position":"","year_start":null,"year_end":null});   
-}
-
-const removeExperienceInput = (index) => {
-    tempEditInput.value.splice(index['index'],1);
 }
 
 const addSkill = () => {
@@ -168,13 +73,90 @@ const removeEducationalAttainmentInput = (index) => {
     tempEditInput.value.splice(index['index'],1);
 }
 
+const addWorkExperienceInput = () => {
+    tempEditInput.value.push({"company":"","position":"","year_start":null,"year_end":null});   
+}
+
+const removeExperienceInput = (index) => {
+    tempEditInput.value.splice(index['index'],1);
+}
+
+const saveChanges = () => { //opens confirmation modal
+    isConfirmation.value = true;
+}
+
+const confirmChanges = () => { //upon clicking yes on confirmation modal
+    savingMessage.value = "Saving changes ...";
+    isLoading.value = true;
+    const formData = new FormData();
+    formData.append('type',objectToEdit.value);
+    if (objectToEdit.value == 'description'){
+        formData.append('tempEditInput',tempEditInput.value);
+    } else {
+        formData.append('tempEditInput',JSON.stringify(tempEditInput.value));
+    }
+    setTimeout(async() => {
+        try {
+            const response = await api.post(`profile/edit/update_profile`,formData,{withCredentials:true});
+            savingMessage.value = "Successfully saved the changes!";
+            switch (objectToEdit.value){
+                case "description":
+                    tempEditInput.value = response.data.data;
+                    description.value = response.data.data; 
+                    user.value.brief_description = response.data.data;  
+                    break;
+                case "educational_attainment":
+                    tempEditInput.value = JSON.parse(response.data.data);
+                    educationalAttainment.value = JSON.parse(response.data.data); 
+                    user.value.educational_attainment = response.data.data;  
+                    break;
+                case "work_experience":
+                    tempEditInput.value = JSON.parse(response.data.data);
+                    workExperiences.value = JSON.parse(response.data.data); 
+                    user.value.work_experience = response.data.data;  
+                    break;
+                case "skills":
+                    tempEditInput.value = JSON.parse(response.data.data);
+                    skills.value = JSON.parse(response.data.data); 
+                    user.value.skills = response.data.data;  
+                    break;
+                default:
+                    break;
+            }
+        } catch (error){
+            savingMessage.value  = "Error";
+            isError.value = true;
+            console.error(error);
+        } finally {
+            isSaved.value = true;
+        }
+    },2000);
+
+    setTimeout(() => {
+        isConfirmation.value = false;
+        savingMessage.value = "Save changes?";
+        isLoading.value = false;
+        isSaved.value = false;
+        isError.value = false;
+
+        isEditOpen.value = false;
+        objectToEdit.value = null;
+        tempEditInput.value = null;
+        skillInput.value = null;
+    },4000);
+}
+
+const declineChanges = () => { //upon clicking no on confirmation modal and just closes it
+    isConfirmation.value = false;
+}
+
 async function fetchProfile(){
     try {
         const response = await api.get(`/profile/${authStore?.getUser?.username}`);
         user.value = response.data.data;
 
         description.value = response.data.data.brief_description;
-        skills.value = response.data.data.skills;
+        skills.value = JSON.parse(response.data.data.skills) ?? [];
         educationalAttainment.value = JSON.parse(response.data.data.educational_attainment) ?? [];
         workExperiences.value = JSON.parse(response.data.data.work_experience) ?? [];
     } catch (error){
@@ -222,17 +204,26 @@ async function fetchProfile(){
                     <p class="font-bold text-xl flex items-center gap-2">
                         Skills <span><Pencil class="w-3 cursor-pointer text-gray-500" @click="toggleModal('skills')"/></span> 
                     </p>
-                    <p class="text-sm text-gray-500">
-                        {{ skills ?? "No information yet." }}
-                    </p>  
+                    <div v-if="skills.length > 0" class="flex flex-wrap gap-4">
+                        <div v-for="(skill) in skills">
+                            <div class="bg-blue-500 cursor-pointer text-white w-32 h-8 rounded-xl hover:opacity-80
+                                flex items-center justify-center text-sm text-center p-4">
+                                {{ skill }}
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="text-sm text-gray-500">No information yet.</div> 
                 </div>
                 <div class="border-b border-gray-300 flex flex-col gap-4 p-4">
                     <p class="font-bold text-xl flex items-center gap-2">
                         Educational attainment <span><Pencil class="w-3 cursor-pointer text-gray-500" @click="toggleModal('educational_attainment')"/></span>
                     </p>
-                    <p class="text-sm text-gray-500">
-                        {{ educationalAttainment ?? "No information yet." }}
-                    </p>  
+                    <div v-if="educationalAttainment.length > 0" class="text-sm text-gray-500">
+                        <div v-for="(education) in educationalAttainment">
+                            <span>{{ education.university }}</span> - <span>{{ education.program }}</span> ({{ education.year_graduated }})
+                        </div>
+                    </div>
+                    <div v-else class="text-sm text-gray-500">No information yet.</div>
                 </div>
                 <div class="flex flex-col gap-4 p-4">
                     <p class="font-bold text-xl flex items-center gap-2">
@@ -250,19 +241,19 @@ async function fetchProfile(){
         </div>
     </div>
 
-    <!-- MODAL -->
+    <!-- EDIT MODAL -->
     <div v-if="isEditOpen == true">
-        <div class="fixed inset-0 bg-black opacity-70 z-50"></div> 
+        <div class="fixed inset-0 bg-black opacity-70 z-40"></div> 
 
-        <div class="fixed inset-0 flex justify-center items-center z-50" @click.self="toggleModal('close')">
+        <div class="fixed inset-0 flex justify-center items-center z-40" @click.self="toggleModal('close')">
             <div class="bg-white w-3/5 h-4/5 p-6 rounded-lg shadow-lg flex flex-col gap-4 overflow-auto">
                 <div class="flex flex-col flex-1 gap-4">
-                    <p class="capitalize font-bold text-xl">{{ objectToEdit.replace("_"," ") }}</p>
+                    <p class="capitalize font-bold text-xl">Edit {{ objectToEdit.replace("_"," ") }}</p>
                     <hr/>
                     <div v-if="objectToEdit == 'description'">
                         <textarea
                         class="border border-gray-300 p-2 max-h-[400px] rounded w-full resize-none overflow-auto"
-                        rows="10"
+                        rows="14"
                         v-model="tempEditInput"
                         />
                     </div>
@@ -362,6 +353,44 @@ async function fetchProfile(){
                             <span><CircleX class="w-4 h-4"/></span> Close  
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONFIRMATION MODEL -->
+    <div v-if="isConfirmation == true">
+        <div class="fixed inset-0 bg-black opacity-70 z-40"></div> 
+        <div class="fixed inset-0 flex justify-center items-center z-40">
+            <div class="bg-white w-1/5 h-1/5 p-6 rounded-lg shadow-lg flex flex-col items-center gap-8">
+                <div>
+                    {{ savingMessage }}
+                </div>
+
+                <div v-if="isSaved == false">
+                    <div v-if="isLoading == false" class="flex justify-center gap-2">
+                        <button @click="confirmChanges"
+                            class="bg-green-500 cursor-pointer text-white w-16 h-8 rounded-xl hover:opacity-80">
+                            Yes
+                        </button>
+                        <button @click="declineChanges"
+                            class="bg-red-500 cursor-pointer text-white w-16 h-8 rounded-xl hover:opacity-80">
+                            No
+                        </button>
+                        
+                    </div>
+                    <div v-else class="flex justify-center gap-2">
+                        <clip-loader :loading="loading" color="#2b7fff" :size="size"></clip-loader>
+                    </div>
+                </div>
+                <div v-else>
+                    <div v-if="isError == true">
+                        <CircleX class="text-red-500 h-12 w-12"/>
+                    </div> 
+                    <div v-else>
+                        <CircleCheck class="text-green-500 h-12 w-12"/>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
