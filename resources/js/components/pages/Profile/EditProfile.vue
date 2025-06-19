@@ -206,7 +206,7 @@ async function fetchProfile(){
                     </p>
                     <div v-if="skills.length > 0" class="flex flex-wrap gap-4">
                         <div v-for="(skill) in skills">
-                            <div class="bg-blue-500 cursor-pointer text-white w-32 h-8 rounded-xl hover:opacity-80
+                            <div class="bg-blue-500 text-white w-32 h-8 rounded-xl
                                 flex items-center justify-center text-sm text-center p-4">
                                 {{ skill }}
                             </div>
@@ -218,22 +218,58 @@ async function fetchProfile(){
                     <p class="font-bold text-xl flex items-center gap-2">
                         Educational attainment <span><Pencil class="w-3 cursor-pointer text-gray-500" @click="toggleModal('educational_attainment')"/></span>
                     </p>
-                    <div v-if="educationalAttainment.length > 0" class="text-sm text-gray-500">
-                        <div v-for="(education) in educationalAttainment">
-                            <span>{{ education.university }}</span> - <span>{{ education.program }}</span> ({{ education.year_graduated }})
+
+                    <div v-if="educationalAttainment.length > 0" class="w-full h-32 mx-auto overflow-x-auto overflow-y-hidden">
+                        <!-- Scrollable container -->
+                        <div class="relative min-w-max h-full">
+                            <!-- Horizontal line centered vertically -->
+                            <div class="absolute top-1/2 left-0 w-full border-t border-gray-500 z-0"></div>
+
+                            <!-- Scrollable flex content -->
+                            <div class="relative flex gap-20 px-8 h-full z-10 text-center">
+                                <div
+                                    v-for="(education, index) in educationalAttainment"
+                                    :key="index"
+                                    class="min-w-32"
+                                    :class="index % 2 === 0 ? 'flex flex-col mt-2' : 'flex flex-col-reverse mb-2'"
+                                    >
+                                    <span class="font-semibold text-sm">{{ education.university }}</span>
+                                    <span class="text-gray-500 italic text-xs">{{ education.program }}</span>
+                                    <span class="z-50 bg-blue-500 rounded-xl text-white text-sm">{{ education.year_graduated }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
                     <div v-else class="text-sm text-gray-500">No information yet.</div>
                 </div>
                 <div class="flex flex-col gap-4 p-4">
                     <p class="font-bold text-xl flex items-center gap-2">
                         Work experience <span><Pencil class="w-3 cursor-pointer text-gray-500" @click="toggleModal('work_experience')"/></span>
                     </p>
-                    <div v-if="workExperiences.length > 0" class="text-sm text-gray-500">
-                        <div v-for="(work) in workExperiences">
-                            <span>{{ work.company }}</span> - <span>{{ work.position }}</span> ({{ work.year_start }} - {{ work.year_end }})
+
+                    <div v-if="workExperiences.length > 0" class="w-full h-32 mx-auto overflow-x-auto overflow-y-hidden">
+                        <!-- Scrollable container -->
+                        <div class="relative min-w-max h-full">
+                            <!-- Horizontal line centered vertically -->
+                            <div class="absolute top-1/2 left-0 w-full border-t border-gray-500 z-0"></div>
+
+                            <!-- Scrollable flex content -->
+                            <div class="relative flex gap-20 px-8 h-full z-10 text-center">
+                                <div
+                                    v-for="(work, index) in workExperiences"
+                                    :key="index"
+                                    class="min-w-32"
+                                    :class="index % 2 === 0 ? 'flex flex-col-reverse mb-4' : 'flex flex-col mt-4'"
+                                    >
+                                    <span class="font-semibold text-sm">{{ work.company }}</span>
+                                    <span class="text-gray-500 italic text-xs">{{ work.position }}</span>
+                                    <span class="z-50 bg-blue-500 rounded-xl text-white text-sm">{{ work.year_start }} - {{ work.year_end }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
                     <div v-else class="text-sm text-gray-500">No information yet.</div>
                 </div>
             </div>
