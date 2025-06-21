@@ -56,11 +56,31 @@ class ProfileController extends Controller
             
             $profile->save();
             DB::commit();
+
+            $data = null;
+            switch($type){
+                case 'description':
+                    $data = $profile->description;
+                    break;
+                case 'educational_attainment': 
+                    $data = json_decode($profile->educational_attainment,true);
+                    $data = collect($data)->sortBy('year_graduated')->values();
+                    break;
+                case 'work_experience':
+                    $data = json_decode($profile->work_experience,true);
+                    $data = collect($data)->sortBy('year_start')->values();
+                    break;
+                case 'skills':
+                    $data = $profile->skills;
+                    break;
+                default:
+                    break;
+            }
             $this->response = [
                 'msg' => 'Profile ' . str_replace("_", " ", $type) . ' has been updated.',
                 'status' => true,
                 'status_code' => 'PROFILE_' . strtoupper(str_replace("_"," ",$type)) . '_UPDATED.',
-                'data' => $profile->$type
+                'data' => $data
             ];
             $this->response_code = 200;
             return response()->json($this->response,$this->response_code);

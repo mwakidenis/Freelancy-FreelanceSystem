@@ -37,16 +37,11 @@ const toggleModal = (edit) => {
     objectToEdit.value = edit;
 
     if (edit == 'description'){
-        var temp = user.value.brief_description;
-        tempEditInput.value = temp;
+        tempEditInput.value = user.value.brief_description;
     } else if (edit == 'educational_attainment'){
-        var temp = user.value.educational_attainment;
-        if (temp) tempEditInput.value = JSON.parse(temp);
-        else tempEditInput.value = [];
+        tempEditInput.value = user.value.educational_attainment;
     } else if (edit == 'work_experience'){
-        var temp = user.value.work_experience;
-        if (temp) tempEditInput.value = JSON.parse(temp);
-        else tempEditInput.value = [];
+        tempEditInput.value = user.value.work_experience;
     } else if (edit == 'skills'){
         var temp = user.value.skills;
         if (temp) tempEditInput.value = JSON.parse(temp);
@@ -106,13 +101,13 @@ const confirmChanges = () => { //upon clicking yes on confirmation modal
                     user.value.brief_description = response.data.data;  
                     break;
                 case "educational_attainment":
-                    tempEditInput.value = JSON.parse(response.data.data);
-                    educationalAttainment.value = JSON.parse(response.data.data); 
+                    tempEditInput.value = response.data.data;
+                    educationalAttainment.value = response.data.data; 
                     user.value.educational_attainment = response.data.data;  
                     break;
                 case "work_experience":
-                    tempEditInput.value = JSON.parse(response.data.data);
-                    workExperiences.value = JSON.parse(response.data.data); 
+                    tempEditInput.value = response.data.data;
+                    workExperiences.value = response.data.data; 
                     user.value.work_experience = response.data.data;  
                     break;
                 case "skills":
@@ -157,8 +152,8 @@ async function fetchProfile(){
 
         description.value = response.data.data.brief_description;
         skills.value = JSON.parse(response.data.data.skills) ?? [];
-        educationalAttainment.value = JSON.parse(response.data.data.educational_attainment) ?? [];
-        workExperiences.value = JSON.parse(response.data.data.work_experience) ?? [];
+        educationalAttainment.value = response.data.data.educational_attainment ?? [];
+        workExperiences.value = response.data.data.work_experience ?? [];
     } catch (error){
         console.error(error);
     }
@@ -282,7 +277,7 @@ async function fetchProfile(){
         <div class="fixed inset-0 bg-black opacity-70 z-40"></div> 
 
         <div class="fixed inset-0 flex justify-center items-center z-40" @click.self="toggleModal('close')">
-            <div class="bg-white w-3/5 h-4/5 p-6 rounded-lg shadow-lg flex flex-col gap-4 overflow-auto">
+            <div class="bg-white md:w-3/5 w-4/5 h-4/5 p-6 rounded-lg shadow-lg flex flex-col gap-4 overflow-auto">
                 <div class="flex flex-col flex-1 gap-4">
                     <p class="capitalize font-bold text-xl">Edit {{ objectToEdit.replace("_"," ") }}</p>
                     <hr/>
@@ -319,20 +314,20 @@ async function fetchProfile(){
                          <div v-else class="text-gray-500 text-center">No skills yet.</div>
                     </div>
                     <div v-else-if="objectToEdit == 'educational_attainment'">
-                        <div v-for="(work,index) in tempEditInput" :key="index" class="grid grid-cols-12 gap-4 text-center my-2">
-                            <div class="col-span-4 flex flex-col items-start gap-2">
+                        <div v-for="(work,index) in tempEditInput" :key="index" class="grid grid-cols-12 gap-4 text-center border-b border-gray-300 mb-1 py-6">
+                            <div class="md:col-span-4 col-span-12 flex flex-col items-start gap-2">
                                 <p class="font-medium">University</p>
                                 <input type="text" v-model="tempEditInput[index].university" class="border border-gray-300 rounded w-full" />
                             </div>
-                            <div class="col-span-4 flex flex-col items-start gap-2">
+                            <div class="md:col-span-4 col-span-6 flex flex-col items-start gap-2">
                                 <p class="font-medium">Program</p>
                                 <input type="text" v-model="tempEditInput[index].program" class="border border-gray-300 rounded w-full" />
                             </div>
-                            <div class="col-span-3 flex flex-col items-start gap-2">
-                                <p class="font-medium">Year graduated</p>
+                            <div class="md:col-span-3 col-span-3 flex flex-col items-start gap-2">
+                                <p class="font-medium">Graduated</p>
                                 <input type="number" v-model="tempEditInput[index].year_graduated" class="border border-gray-300 rounded w-full" />
                             </div>
-                            <div class="col-span-1 flex items-center mt-7 justify-center">
+                            <div class="md:col-span-1 col-span-3 flex items-center mt-7 justify-center">
                                 <CircleMinus v-if="tempEditInput.length > 1" @click="removeEducationalAttainmentInput({index})" class="text-red-500 cursor-pointer hover:opacity-70"/>
                             </div>
                         </div>
@@ -344,24 +339,24 @@ async function fetchProfile(){
                         </div>
                     </div>
                     <div v-else-if="objectToEdit == 'work_experience'">
-                        <div v-for="(work,index) in tempEditInput" :key="index" class="grid grid-cols-12 gap-4 text-center my-2">
-                            <div class="col-span-4 flex flex-col items-start gap-2">
+                        <div v-for="(work,index) in tempEditInput" :key="index" class="grid grid-cols-12 gap-4 text-center border-b border-gray-300 mb-1 py-6">
+                            <div class="md:col-span-4 col-span-6 flex flex-col items-start gap-2">
                                 <p class="font-medium">Company</p>
                                 <input type="text" v-model="tempEditInput[index].company" class="border border-gray-300 rounded w-full" />
                             </div>
-                            <div class="col-span-3 flex flex-col items-start gap-2">
+                            <div class="md:col-span-3 col-span-6 flex flex-col items-start gap-2">
                                 <p class="font-medium">Position</p>
                                 <input type="text" v-model="tempEditInput[index].position" class="border border-gray-300 rounded w-full" />
                             </div>
-                            <div class="col-span-2 flex flex-col items-start gap-2">
+                            <div class="md:col-span-2 col-span-5 flex flex-col items-start gap-2">
                                 <p class="font-medium">Year started</p>
                                 <input type="number" v-model="tempEditInput[index].year_start" class="border border-gray-300 rounded w-full" />
                             </div>
-                            <div class="col-span-2 flex flex-col items-start gap-2">
+                            <div class="md:col-span-2 col-span-5 flex flex-col items-start gap-2">
                                 <p class="font-medium">Year ended</p>
                                 <input type="number" v-model="tempEditInput[index].year_end" class="border border-gray-300 rounded w-full" />
                             </div>
-                            <div class="col-span-1 flex items-center mt-7 justify-center">
+                            <div class="md:col-span-1 col-span-2 flex items-center mt-7 justify-center">
                                 <CircleMinus v-if="tempEditInput.length > 1" @click="removeExperienceInput({index})" class="text-red-500 cursor-pointer hover:opacity-70"/>
                             </div>
                         </div>
@@ -397,8 +392,8 @@ async function fetchProfile(){
     <div v-if="isConfirmation == true">
         <div class="fixed inset-0 bg-black opacity-70 z-40"></div> 
         <div class="fixed inset-0 flex justify-center items-center z-40">
-            <div class="bg-white w-1/5 h-1/5 p-6 rounded-lg shadow-lg flex flex-col items-center gap-8">
-                <div>
+            <div class="bg-white w-2/5 h-1/5 p-6 rounded-lg shadow-lg flex flex-col items-center gap-8 p-4">
+                <div class="text-center">
                     {{ savingMessage }}
                 </div>
 
@@ -420,10 +415,10 @@ async function fetchProfile(){
                 </div>
                 <div v-else>
                     <div v-if="isError == true">
-                        <CircleX class="text-red-500 h-12 w-12"/>
+                        <CircleX class="text-red-500 md:h-12 h-8 md:w-12 w-8"/>
                     </div> 
                     <div v-else>
-                        <CircleCheck class="text-green-500 h-12 w-12"/>
+                        <CircleCheck class="text-green-500 md:h-12 h-8 md:w-12 w-8"/>
                     </div>
                 </div>
 
