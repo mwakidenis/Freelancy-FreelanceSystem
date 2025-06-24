@@ -14,12 +14,12 @@ return new class extends Migration
         Schema::create('freelances', function (Blueprint $table) {
             $table->id('id');
             $table->string('client_id');
-            $table->string('title');
-            $table->string('slug');
-            $table->string('description');
-            $table->string('category');
+            $table->text('title');
+            $table->text('slug');
+            $table->text('description');
+            $table->text('category');
             $table->double('rate');
-            $table->string('status')->default('active');
+            $table->string('status');
             $table->timestamps();
             $table->softDeletes();
         });

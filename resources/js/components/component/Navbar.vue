@@ -13,7 +13,7 @@ const authStore = useAuthStore();
             <router-link :to="{name:'inbox'}">
                 <MessageSquareMore/>
             </router-link>
-            <div v-if="authStore.isClient">
+            <div>
                 <router-link :to="{name:'client-view-projects'}">Projects</router-link>
             </div>
             <router-link :to="{name:'edit-profile'}">

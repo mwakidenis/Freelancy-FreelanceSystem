@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Cookie;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Http\Request;
 use App\Models\{Freelance,Proposal};
-use App\Http\Resources\{FreelanceResource,ProposalResource};
+use App\Http\Resources\{FreelanceFreelancerResource,ProposalResource,FreelanceClientResource};
 use DB,Str;
 
 class FreelanceController extends Controller
@@ -76,7 +76,7 @@ class FreelanceController extends Controller
             'msg' => 'Freelance List',
             'status' => true,
             'status_code' => "FREELANCE_LIST",
-        ] + FreelanceResource::collection($freelances)->response()->getData(true); 
+        ] + FreelanceFreelancerResource::collection($freelances)->response()->getData(true); 
         //ALSO the + one is used since its automatically in data and ill just add the result (or data) to the response array
         //the response()->getData(true) is for meta sources like pagination link etc        
         $this->response_code = 200;
@@ -95,12 +95,14 @@ class FreelanceController extends Controller
             $freelance->description = $request->input('description');
             $freelance->category = $request->input('category');
             $freelance->rate = $request->input('rate');
+            $freelance->status = 'active';
             $freelance->save();
             DB::commit();
             $this->response = [
                 'msg' => 'Freelance project has been created successfully',
                 'status' => true,
                 'status_code' => "FREELANCE_CREATED",
+                'data' => new FreelanceClientResource($freelance)
             ];
             $this->response_code = 201;
         } catch(\Exception $e){
@@ -131,16 +133,16 @@ class FreelanceController extends Controller
             'msg' => 'View Freelance',
             'status'=> true,
             'status_code' => 'VIEW_FREELANCE',
-            'data' => new FreelanceResource($freelance)
+            'data' => new FreelanceFreelancerResource($freelance)
         ];
         $this->response_code = 200;
         callback:
         return response()->json($this->response,$this->response_code);
     }
 
-    //add middleware for checking if the user is same as creator of freelance
-    public function updateInfo(Request $request,$slug=null){
+    public function update(Request $request, $slug=null){
         $freelance = Freelance::where('slug',$slug)->first();
+        $type = $request->input('type');
         if (!$freelance){
             $this->response = [
                 'msg' => 'Freelance not found',
@@ -150,43 +152,37 @@ class FreelanceController extends Controller
             $this->response_code = 404;
             goto callback;
         }
-        $freelance->title = Str::title($request->input('title'),$freelance->title);
-        $freelance->slug = $this->generateSlug($request->input('title'),$freelance->title);
-        $freelance->category = $request->input('category',$freelance->category);
-        $freelance->rate = $request->input('rate',$freelance->rate);
+        if ($type == 'status'){
+            $freelance->status = $freelance->status == 'active' ? 'inactive' : 'active';
+        } else {
+            $freelance->title = Str::title($request->input('title'));
+            $freelance->slug = $this->generateSlug($request->input('title'));
+            $freelance->category = $request->input('category');
+            $freelance->rate = $request->input('rate');
+            $freelance->description = $request->input('description');
+        }
         $freelance->save();
         $this->response = [
-            'msg' => 'Freelance information successfully updated',
+            'msg' => `Freelance ${type} successfully updated`,
             'status' => true,
-            'status_code' => 'FREELANCE_INFO_UPDATED'
+            'status_code' => 'FREELANCE_' . strtoupper($type) . '_UPDATED',
+            'data' => new FreelanceClientResource($freelance)
         ];
         $this->response_code = 200;
         callback:
         return response($this->response,$this->response_code);
     }
-    
-    //add middleware for checking if the user is same as creator of freelance
-    public function updateStatus($slug=null){
-        $freelance = Freelance::where('slug',$slug)->first();
-        if (!$freelance){
-            $this->response = [
-                'msg' => 'Freelance not found',
-                'status' => false,
-                'status_code' => 'NOT_FOUND'
-            ];
-            $this->response_code = 404;
-            goto callback;
-        }
-        $freelance->status = $freelance->status == 'active' ? 'inactive' : 'active';
-        $freelance->save();
+
+    public function getClientFreelanceProjects(){
+        $user = $this->getUser();
+        $freelances = Freelance::where('client_id',$user->id)->orderBy('created_at','DESC')->get();
         $this->response = [
-            'msg' => 'Freelance status successfully updated',
+            'msg' => 'Client list of freelance projects',
             'status' => true,
-            'status_code' => 'FREELANCE_STATUS_UPDATED'
-        ];
+            'status_code' => 'CLIENT_LIST_FREELANCE_PROJECTS'
+        ] + FreelanceClientResource::collection($freelances)->response()->getData(true);
         $this->response_code = 200;
-        callback:
-        return response($this->response,$this->response_code);
+        return response()->json($this->response,$this->response_code);
     }
 
     public function showAllProposals($slug=null){
@@ -219,7 +215,4 @@ class FreelanceController extends Controller
         callback:
         return response()->json($this->response,$this->response_code);
     }
-
-
-
 }

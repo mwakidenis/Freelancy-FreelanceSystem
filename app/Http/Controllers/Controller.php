@@ -24,6 +24,17 @@ class Controller extends BaseController
             }
         }
         $user = JWTAuth::setToken($token)->authenticate();
-        return $user;
+        if ($user){
+            return $user;
+        } else {
+            $this->response = [
+                'msg' => 'Unauthorized',
+                'status' => false,
+                'status_code' => "UNAUTHORIZED"
+            ];
+            $this->response_code = 401;
+            return response()->json($this->response,$this->response_code);
+        }
+        
     }
 }

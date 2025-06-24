@@ -7,7 +7,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use App\Models\{User};
 use Str;
 
-class FreelanceResource extends JsonResource
+class FreelanceFreelancerResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

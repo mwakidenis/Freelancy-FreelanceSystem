@@ -86,18 +86,26 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) 
 Route::post('/email/verify',['as'=>'api.verify.email','uses'=>'App\Http\Controllers\AuthController@verify_email']);
 
 Route::group(['prefix'=>'freelances','as'=>'freelances.','namespace'=>'App\Http\Controllers'], function() {
-    Route::get('/',['uses'=>'FreelanceController@index']); //api/freelances - GET all freelances
-    Route::post('/',['uses'=>'FreelanceController@store', 'middleware'=>['api.auth','api.check_if_client']]); //api/freelances - POST create freelances
-    Route::get('/{slug?}',['uses'=>'FreelanceController@show']); //api/freelances/{id} - GET single freelance > show
+    //'middleware'=>['api.auth','api.check_if_client']
+    Route::group(['prefix'=>'client','as'=>'client'], function() {  
+        Route::get('/',['uses'=>'FreelanceController@getClientFreelanceProjects']); // VIEW ALL FREELANCES FOR THE CLIENT
+        Route::post('/',['uses'=>'FreelanceController@store']);
+        Route::put('/{slug?}',['uses'=>'FreelanceController@update']);
+    });    
 
+    Route::get('/',['uses'=>'FreelanceController@index']); //api/freelances - GET all freelances GENERAL
+    // Route::
+    Route::get('/{slug?}',['uses'=>'FreelanceController@show']); //api/freelances/{id} - GET single freelance > show 
+    // Route::get('/{slug?}/proposals',['uses'=>'FreelanceController@showAllProposals']); //api/freelances/{slug}/proposals - GET all proposal for a specific project
+    //PROBLEM!! the freelances/{slug?} is conflicting with freelances/client/* 
     //for client 
-    Route::get('/{slug?}/proposals',['uses'=>'FreelanceController@showAllProposals']); //api/freelances/{slug}/proposals - GET all proposal for a specific project
-    Route::put('/{slug?}',['uses'=>'FreelanceController@updateInfo']); //api/freelances/{slug} - PUT update info
-    Route::patch('/{slug?}',['uses'=>'FreelanceController@updateStatus']); //api/freelances/{slug} - PATCH update status
+
 });
 
 Route::group(['prefix'=>'users','as'=>'users.','namespace'=>'App\Http\Controllers'], function() {
+    // remove this
     Route::get('/freelances',['uses'=>'UserController@getUserFreelances']); //api/user/freelances - GET user's freelances  > getUserFreelances
+    // remove this
     Route::get('/proposals',['uses'=>'UserController@getUserProposals']); //api/user/proposal - GET user's proposals > getUserProposals
 
     Route::get('/freelances/{slug?}/proposals',['uses'=>'UserController@getProposalsFromSingleFreelance','middleware'=>['api.check_if_own_freelance_project']]);

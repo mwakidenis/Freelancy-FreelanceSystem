@@ -10,7 +10,6 @@ import Register from "../components/pages/Register.vue";
 import EmailVerify from "../components/pages/EmailVerify.vue";
 import EmailVerifySubmit from "../components/pages/EmailVerifySubmit.vue";
 // FOR FREELANCE MODULE
-import FreelanceCreate from "../components/pages/Freelance/Create.vue";
 import FreelanceView from "../components/pages/Freelance/View.vue";
 import FreelanceApply from "../components/pages/Freelance/Apply.vue";
 // FOR CLIENT MODULE
@@ -50,7 +49,7 @@ const routes = [
             {
                 path: '/projects/:slug',
                 component: ClientViewSingleProject,
-                name: "client-view-single-project"
+                name: "client-view-single-project" 
             },
             { 
                 path: '/:slug/proposals',
@@ -120,11 +119,6 @@ const routes = [
     {
         path: '/error', //error page if the path matches nothing 
         // component: ,
-    },
-    {
-        path: '/freelance/create',
-        component: FreelanceCreate,
-        meta: { requiresAuth:true }
     },
 ];
 
