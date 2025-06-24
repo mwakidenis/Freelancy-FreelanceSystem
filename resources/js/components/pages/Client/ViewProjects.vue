@@ -3,8 +3,8 @@ import { ref,onMounted,watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../../authStore';
 import api from '../../../api';
-import {Plus,Save,CircleX,CircleCheck } from 'lucide-vue-next';
-import { ClipLoader } from 'vue-spinner/dist/vue-spinner.min.js'
+import {Plus,Save,CircleX } from 'lucide-vue-next';
+import Swal from 'sweetalert2';
 
 const router = useRouter();
 const authStore = useAuthStore(); //to implement
@@ -29,9 +29,6 @@ const actionToDo = ref(false);
 
 //for confirmation modal
 const savingMessage = ref(null);
-const isConfirmation = ref(false);
-const isLoading = ref(false);
-const isSaved = ref(false);
 const isError = ref(false);
 
 onMounted(async () => {
@@ -42,7 +39,7 @@ onMounted(async () => {
     await fetchFreelances();
 });
 
-watch(freelanceIndexToEdit, () => { //watches the freelance object and re-assigns value to v-model ;
+watch(freelanceIndexToEdit, () => { //watches the freelance object and re-assigns value to v-model
     if (freelanceIndexToEdit.value != null){
         const objectToEdit = freelances.value[freelanceIndexToEdit.value];
         title.value = objectToEdit.title;
@@ -69,13 +66,13 @@ const handleAction = (action, value) => {
             break;
         case 'Edit':
             openDropdownId.value = null;
-            toggleProjectModal("Edit");
             freelanceIndexToEdit.value = value;
+            toggleProjectModal("Edit");
             break;
         case 'Status':
             openDropdownId.value = null;
             freelanceIndexToEdit.value = value;
-            confirmationModal(action);
+            confirmAndProcess(action);
             break;
         case 'default':
             openDropdownId.value = null;
@@ -106,56 +103,78 @@ const toggleProjectModal = (action) => {
     }
 }
 
-const confirmationModal = (action) => {
-    isConfirmation.value = true;
-
-    switch(action){
+const confirmAndProcess = async (type) => {
+    switch(type){
         case 'Create':
-            savingMessage.value = "Create new project?";
+            savingMessage.value = 'Create a project?';
             break;
         case 'Edit':
-            savingMessage.value = "Update project information?";
+            savingMessage.value = 'Update project information?';
             break;
         case 'Status':
-            savingMessage.value = "Update project status?";
-            actionToDo.value = "Status";
+            savingMessage.value = 'Update project status?';
             break;
         default:
-            isConfirmation.value = false;
             break;
     }
-}
 
-const confirmChanges = async (action) => {
-    isLoading.value = true; 
+  const result = await Swal.fire({ //swal confirmation modal 
+    text: savingMessage.value,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes',
+    confirmButtonColor: '#22c55e',
+    cancelButtonText: 'Cancel',
+    cancelButtonColor: "#ef4444",
+  })
 
-    switch (action){
+  if (result.isConfirmed) { 
+    switch(type){
+        case 'Create':
+            savingMessage.value = "Creating a project ...";
+            break;
+        case 'Edit':
+            savingMessage.value = "Updating project information ...";
+            break;
+        case 'Status':
+            savingMessage.value = 'Updating project status ...';
+            break;
+        default:
+            break;
+    }
+
+    Swal.fire({ //swal loading
+      text: savingMessage.value,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading()
+      }
+    })
+
+    switch(type){
         case 'Create':
             await createNewFreelance();
+            toggleProjectModal('Close');
             break;
         case 'Edit':
             await updateInfoFreelance();
+            toggleProjectModal('Close');
             break;
         case 'Status':
             await updateStatusFreelance();
             break;
+        default:
+            break;
     }
+
+    Swal.fire({ //swal result
+      text: savingMessage.value,
+      icon: isError.value == true ? 'error' : 'success',
+      timer: 1500,
+      showConfirmButton: false
+    })
     
-    setTimeout(() => {
-        isConfirmation.value = false;
-        savingMessage.value = null;
-        isLoading.value = false;
-        isSaved.value = false;
-        isError.value = false;
-
-        isModalOpen.value = false;
-        actionToDo.value = null;
-        emptyEditInput();
-    },4000);
-}
-
-const declineChanges = () => {
-    isConfirmation.value = false;
+  }
 }
 
 function emptyEditInput(){ //empty the freelance object and nulls the form values
@@ -177,46 +196,46 @@ async function fetchFreelances(){
     }
 }
 
-async function createNewFreelance(){
-    savingMessage.value = "Creating a project ...";
-
+async function createNewFreelance() {
     const formData = new FormData();
-    formData.append('title',title.value);
-    formData.append('description',description.value);
-    formData.append('category',category.value);
-    formData.append('rate',rate.value);
+    formData.append('title', title.value);
+    formData.append('description', description.value);
+    formData.append('category', category.value);
+    formData.append('rate', rate.value);
 
-    setTimeout(async() => {
-        try {
-            const response = await api.post('/freelances/client',formData,{withCredentials:true});
+    return new Promise((resolve) => {
+        setTimeout(async () => {
+            try {
+            const response = await api.post('/freelances/client', formData, { withCredentials: true });
             freelances.value.unshift(response.data.data);
             savingMessage.value = "Successfully created a project!";
-        } catch (error){
-            savingMessage.value  = "Error";
+            isError.value = false;
+            } catch (error) {
+            savingMessage.value = "Error";
             isError.value = true;
             console.error(error);
-        } finally {
-            isSaved.value = true;
-        }
-    },2000);
+            } finally {
+            resolve(); // resolves the promise so it can be awaited
+            }
+        }, 2000);
+    });
 }
 
-async function updateInfoFreelance(){
-    savingMessage.value = "Updating project information ...";
-    
+async function updateInfoFreelance() {
     const formData = new FormData();
-    formData.append('title',title.value);
-    formData.append('description',description.value);
-    formData.append('category',category.value);
-    formData.append('rate',rate.value);
-    formData.append('type','information');
+    formData.append('title', title.value);
+    formData.append('description', description.value);
+    formData.append('category', category.value);
+    formData.append('rate', rate.value);
+    formData.append('type', 'information');
     formData.append('_method', 'PUT');
 
     const objectToEdit = freelances.value[freelanceIndexToEdit.value];
 
-    setTimeout(async() => {
-        try {
-            const response = await api.post(`freelances/client/${objectToEdit.slug}`,formData,{withCredentials:true});
+    return new Promise((resolve) => {
+        setTimeout(async () => {
+            try {
+            const response = await api.post(`freelances/client/${objectToEdit.slug}`, formData, { withCredentials: true });
             const updatedObject = response.data.data;
             title.value = updatedObject.title;
             description.value = updatedObject.description;
@@ -224,39 +243,42 @@ async function updateInfoFreelance(){
             rate.value = updatedObject.rate;
             freelances.value[freelanceIndexToEdit.value] = updatedObject;
             savingMessage.value = "Successfully updated project information!";
-        } catch (error){
-            savingMessage.value  = "Error";
+            isError.value = false;
+            } catch (error) {
+            savingMessage.value = "Error";
             isError.value = true;
             console.error(error);
-        } finally {
-            isSaved.value = true;
-        }
-    },2000);
+            } finally {
+            resolve(); // resolves the promise so it can be awaited
+            }
+        }, 2000);
+    });
 }
 
-async function updateStatusFreelance(){
-    savingMessage.value = "Updating project status ...";
-
+async function updateStatusFreelance() {
     const formData = new FormData();
-    formData.append('type','status');
-    formData.append('_method','PUT');
+    formData.append('type', 'status');
+    formData.append('_method', 'PUT');
 
     const objectToEdit = freelances.value[freelanceIndexToEdit.value];
 
-    setTimeout(async() => {
-        try {
-            const response = await api.post(`freelances/client/${objectToEdit.slug}`,formData,{withCredentials:true});
+    return new Promise((resolve) => {
+        setTimeout(async () => {
+            try {
+            const response = await api.post(`freelances/client/${objectToEdit.slug}`, formData, { withCredentials: true });
             const updatedObject = response.data.data;
             freelances.value[freelanceIndexToEdit.value] = updatedObject;
             savingMessage.value = "Successfully updated project status!";
-        } catch (error){
-            savingMessage.value  = "Error";
+            isError.value = false;
+            } catch (error) {
+            savingMessage.value = "Error";
             isError.value = true;
             console.error(error);
-        } finally {
-            isSaved.value = true;
-        }
-    },2000);
+            } finally {
+            resolve();
+            }
+        }, 2000);
+    });
 }
 </script>
 
@@ -314,7 +336,7 @@ async function updateStatusFreelance(){
     </div> -->
     <br><br>
 
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg h-full min-h-full">
+    <div class="relative overflow-x-auto shadow-md sm:rounded-lg min-h-screen">
         <table class="w-full min-h-96 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
@@ -439,7 +461,7 @@ async function updateStatusFreelance(){
                     <textarea v-model="description" rows="10" class="border border-gray-300 rounded w-full mb-4"/>
                 </div>
                 <div class="ml-auto flex gap-4  relative fixed bottom-0 ">
-                    <button @click="confirmationModal(actionToDo)"
+                    <button @click="confirmAndProcess(actionToDo)"
                         class="bg-green-500 cursor-pointer text-white w-24 h-12 rounded-xl hover:opacity-80 ml-auto
                             flex items-center justify-center gap-2">
                         <span><Save class="w-4 h-4"/></span> {{ actionToDo }}
@@ -454,43 +476,4 @@ async function updateStatusFreelance(){
             </div>
         </div>
     </div>
-
-    <!-- CONFIRMATION modal -->
-    <div v-if="isConfirmation == true">
-        <div class="fixed inset-0 bg-black opacity-70 z-40"></div> 
-        <div class="fixed inset-0 flex justify-center items-center z-40">
-            <div class="bg-white w-1/5 h-1/5 p-6 rounded-lg shadow-lg flex flex-col items-center gap-8 p-4">
-                <div class="text-center">
-                    {{ savingMessage }}
-                </div>
-
-                <div v-if="isSaved == false">
-                    <div v-if="isLoading == false" class="flex justify-center gap-2">
-                        <button @click="confirmChanges(actionToDo)"
-                            class="bg-green-500 cursor-pointer text-white w-16 h-8 rounded-xl hover:opacity-80">
-                            Yes
-                        </button>
-                        <button @click="declineChanges"
-                            class="bg-red-500 cursor-pointer text-white w-16 h-8 rounded-xl hover:opacity-80">
-                            No
-                        </button>
-                        
-                    </div>
-                    <div v-else class="flex justify-center gap-2">
-                        <clip-loader :loading="loading" color="#2b7fff" :size="size"></clip-loader>
-                    </div>
-                </div>
-                <div v-else>
-                    <div v-if="isError == true">
-                        <CircleX class="text-red-500 md:h-12 h-8 md:w-12 w-8"/>
-                    </div> 
-                    <div v-else>
-                        <CircleCheck class="text-green-500 md:h-12 h-8 md:w-12 w-8"/>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
 </template>
