@@ -3,11 +3,12 @@ import { ref,onMounted,watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../../authStore';
 import api from '../../../api';
-import {Plus,Save,CircleX } from 'lucide-vue-next';
+import {Plus,Save,CircleX,CircleCheck } from 'lucide-vue-next';
+import { ClipLoader } from 'vue-spinner/dist/vue-spinner.min.js'
 
 const router = useRouter();
-const authStore = useAuthStore();
-const isClient = ref(false);
+const authStore = useAuthStore(); //to implement
+const isClient = ref(false); //to implement
 const freelances = ref([]);
 
 //for dropdown
@@ -25,6 +26,13 @@ const rate = ref();
 //for modal
 const isModalOpen = ref(false);
 const actionToDo = ref(false);
+
+//for confirmation modal
+const savingMessage = ref(null);
+const isConfirmation = ref(false);
+const isLoading = ref(false);
+const isSaved = ref(false);
+const isError = ref(false);
 
 onMounted(async () => {
     // if (authStore.isAuthenticated && authStore.isClient){
@@ -67,9 +75,10 @@ const handleAction = (action, value) => {
         case 'Status':
             openDropdownId.value = null;
             freelanceIndexToEdit.value = value;
-            updateProjectStatus();
+            confirmationModal(action);
             break;
         case 'default':
+            openDropdownId.value = null;
             break;
     }
 };
@@ -97,47 +106,56 @@ const toggleProjectModal = (action) => {
     }
 }
 
-const saveProject = async () => {
-    try {
-        const formData = new FormData();
-        formData.append('title',title.value);
-        formData.append('description',description.value);
-        formData.append('category',category.value);
-        formData.append('rate',rate.value);
+const confirmationModal = (action) => {
+    isConfirmation.value = true;
 
-        if (actionToDo.value == 'Create'){ //for create
-            const response = await api.post('/freelances/client',formData,{withCredentials:true});
-            freelances.value.unshift(response.data.data);
-            console.log("response is: ", response.data.data);
-        } else { //for edit
-            formData.append('type','information');
-            formData.append('_method', 'PUT');
-            const objectToEdit = freelances.value[freelanceIndexToEdit.value];
-            const response = await api.post(`freelances/client/${objectToEdit.slug}`,formData,{withCredentials:true});
-            const updatedObject = response.data.data;
-            title.value = updatedObject.title;
-            description.value = updatedObject.description;
-            category.value = updatedObject.category;
-            rate.value = updatedObject.rate;
-            freelances.value[freelanceIndexToEdit.value] = updatedObject;
-        }
-    } catch (error){
-        console.error(error);
+    switch(action){
+        case 'Create':
+            savingMessage.value = "Create new project?";
+            break;
+        case 'Edit':
+            savingMessage.value = "Update project information?";
+            break;
+        case 'Status':
+            savingMessage.value = "Update project status?";
+            actionToDo.value = "Status";
+            break;
+        default:
+            isConfirmation.value = false;
+            break;
     }
 }
 
-const updateProjectStatus = async() => {
-    try {
-        const formData = new FormData();
-        formData.append('type','status');
-        formData.append('_method','PUT');
-        const objectToEdit = freelances.value[freelanceIndexToEdit.value];
-        const response = await api.post(`freelances/client/${objectToEdit.slug}`,formData,{withCredentials:true});
-        const updatedObject = response.data.data;
-        freelances.value[freelanceIndexToEdit.value] = updatedObject;
-    } catch (error) {
-        console.error
+const confirmChanges = async (action) => {
+    isLoading.value = true; 
+
+    switch (action){
+        case 'Create':
+            await createNewFreelance();
+            break;
+        case 'Edit':
+            await updateInfoFreelance();
+            break;
+        case 'Status':
+            await updateStatusFreelance();
+            break;
     }
+    
+    setTimeout(() => {
+        isConfirmation.value = false;
+        savingMessage.value = null;
+        isLoading.value = false;
+        isSaved.value = false;
+        isError.value = false;
+
+        isModalOpen.value = false;
+        actionToDo.value = null;
+        emptyEditInput();
+    },4000);
+}
+
+const declineChanges = () => {
+    isConfirmation.value = false;
 }
 
 function emptyEditInput(){ //empty the freelance object and nulls the form values
@@ -148,8 +166,6 @@ function emptyEditInput(){ //empty the freelance object and nulls the form value
     rate.value = null;
 }
 
-// add const confirm creation of project for secondary little modal
-
 async function fetchFreelances(){
     try{
         const response = await api.get('/freelances/client',{
@@ -159,6 +175,88 @@ async function fetchFreelances(){
     } catch (error){
         console.error(error);
     }
+}
+
+async function createNewFreelance(){
+    savingMessage.value = "Creating a project ...";
+
+    const formData = new FormData();
+    formData.append('title',title.value);
+    formData.append('description',description.value);
+    formData.append('category',category.value);
+    formData.append('rate',rate.value);
+
+    setTimeout(async() => {
+        try {
+            const response = await api.post('/freelances/client',formData,{withCredentials:true});
+            freelances.value.unshift(response.data.data);
+            savingMessage.value = "Successfully created a project!";
+        } catch (error){
+            savingMessage.value  = "Error";
+            isError.value = true;
+            console.error(error);
+        } finally {
+            isSaved.value = true;
+        }
+    },2000);
+}
+
+async function updateInfoFreelance(){
+    savingMessage.value = "Updating project information ...";
+    
+    const formData = new FormData();
+    formData.append('title',title.value);
+    formData.append('description',description.value);
+    formData.append('category',category.value);
+    formData.append('rate',rate.value);
+    formData.append('type','information');
+    formData.append('_method', 'PUT');
+
+    const objectToEdit = freelances.value[freelanceIndexToEdit.value];
+
+    setTimeout(async() => {
+        try {
+            const response = await api.post(`freelances/client/${objectToEdit.slug}`,formData,{withCredentials:true});
+            const updatedObject = response.data.data;
+            title.value = updatedObject.title;
+            description.value = updatedObject.description;
+            category.value = updatedObject.category;
+            rate.value = updatedObject.rate;
+            freelances.value[freelanceIndexToEdit.value] = updatedObject;
+            savingMessage.value = "Successfully updated project information!";
+        } catch (error){
+            savingMessage.value  = "Error";
+            isError.value = true;
+            console.error(error);
+        } finally {
+            isSaved.value = true;
+        }
+    },2000);
+}
+
+async function updateStatusFreelance(){
+    savingMessage.value = "Updating project status ...";
+
+    const formData = new FormData();
+    formData.append('type','status');
+    formData.append('_method','PUT');
+
+    const objectToEdit = freelances.value[freelanceIndexToEdit.value];
+
+    setTimeout(async() => {
+        try {
+            const response = await api.post(`freelances/client/${objectToEdit.slug}`,formData,{withCredentials:true});
+            const updatedObject = response.data.data;
+            freelances.value[freelanceIndexToEdit.value] = updatedObject;
+            savingMessage.value = "Successfully updated project status!";
+        } catch (error){
+            savingMessage.value  = "Error";
+            isError.value = true;
+            console.error(error);
+        } finally {
+            isSaved.value = true;
+        }
+    },2000);
 }
 </script>
 
@@ -317,7 +415,7 @@ async function fetchFreelances(){
         </nav> -->
     </div>
 
-    <!-- ADD MODAL -->
+    <!-- ADD AND EDIT MODAL -->
     <div v-if="isModalOpen && actionToDo">
         <div class="fixed inset-0 bg-black opacity-70 z-40"></div> 
         <div class="fixed inset-0 flex justify-center items-center z-40" @click.self="toggleProjectModal('Close')">
@@ -341,17 +439,11 @@ async function fetchFreelances(){
                     <textarea v-model="description" rows="10" class="border border-gray-300 rounded w-full mb-4"/>
                 </div>
                 <div class="ml-auto flex gap-4  relative fixed bottom-0 ">
-                    <!-- replace create new project with new method that checks either  -->
-                    <button @click="saveProject"
+                    <button @click="confirmationModal(actionToDo)"
                         class="bg-green-500 cursor-pointer text-white w-24 h-12 rounded-xl hover:opacity-80 ml-auto
                             flex items-center justify-center gap-2">
                         <span><Save class="w-4 h-4"/></span> {{ actionToDo }}
                     </button>
-                    <!-- <button v-else @click="createNewProject"
-                        class="bg-green-500 cursor-pointer text-white w-24 h-12 rounded-xl hover:opacity-80 ml-auto
-                            flex items-center justify-center gap-2">
-                        <span><Save class="w-4 h-4"/></span> Create
-                    </button> -->
                     <button @click="toggleProjectModal('Close')"             
                         class="bg-red-500 cursor-pointer text-white w-24 h-12 rounded-xl hover:opacity-80 ml-auto
                             flex items-center justify-center gap-2">
@@ -363,5 +455,42 @@ async function fetchFreelances(){
         </div>
     </div>
 
+    <!-- CONFIRMATION modal -->
+    <div v-if="isConfirmation == true">
+        <div class="fixed inset-0 bg-black opacity-70 z-40"></div> 
+        <div class="fixed inset-0 flex justify-center items-center z-40">
+            <div class="bg-white w-1/5 h-1/5 p-6 rounded-lg shadow-lg flex flex-col items-center gap-8 p-4">
+                <div class="text-center">
+                    {{ savingMessage }}
+                </div>
+
+                <div v-if="isSaved == false">
+                    <div v-if="isLoading == false" class="flex justify-center gap-2">
+                        <button @click="confirmChanges(actionToDo)"
+                            class="bg-green-500 cursor-pointer text-white w-16 h-8 rounded-xl hover:opacity-80">
+                            Yes
+                        </button>
+                        <button @click="declineChanges"
+                            class="bg-red-500 cursor-pointer text-white w-16 h-8 rounded-xl hover:opacity-80">
+                            No
+                        </button>
+                        
+                    </div>
+                    <div v-else class="flex justify-center gap-2">
+                        <clip-loader :loading="loading" color="#2b7fff" :size="size"></clip-loader>
+                    </div>
+                </div>
+                <div v-else>
+                    <div v-if="isError == true">
+                        <CircleX class="text-red-500 md:h-12 h-8 md:w-12 w-8"/>
+                    </div> 
+                    <div v-else>
+                        <CircleCheck class="text-green-500 md:h-12 h-8 md:w-12 w-8"/>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
 </template>

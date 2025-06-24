@@ -373,7 +373,7 @@ async function fetchProfile(){
                 </div>
 
                 <div class="ml-auto flex gap-4  relative fixed bottom-0 ">
-                    <button @click="saveChanges(objectToEdit)"
+                    <button @click="saveChanges()"
                         class="bg-green-500 cursor-pointer text-white w-24 h-12 rounded-xl hover:opacity-80 ml-auto
                             flex items-center justify-center gap-2">
                         <span><Save class="w-4 h-4"/></span> Save
