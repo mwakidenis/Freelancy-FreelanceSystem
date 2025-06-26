@@ -1,15 +1,19 @@
 <script setup>
 import { ref,onMounted,watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../../../authStore';
+import { debounce } from 'lodash';
 import api from '../../../api';
-import {Plus,Save,CircleX } from 'lucide-vue-next';
+import {Plus,Save,CircleX,Search,ArrowUp,ArrowDown,Eraser } from 'lucide-vue-next';
+import InputBox from '../../component/InputBox.vue';
 import Swal from 'sweetalert2';
 
+const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore(); //to implement
 const isClient = ref(false); //to implement
 const freelances = ref([]);
+const freelancesPaginated = ref([]);
 
 //for dropdown
 const openDropdownId = ref(null);
@@ -31,12 +35,65 @@ const actionToDo = ref(false);
 const savingMessage = ref(null);
 const isError = ref(false);
 
+//for pagination
+const itemsPerPage = 10;
+const numberOfPage = ref();
+const currentPage = ref(parseInt(route.query.page)  || 1); //add url tracking
+const startCurrentPage = ref(0);
+const endCurrentPage = ref(itemsPerPage);
+
+
+//for search
+const queryParams = ref(route.query.q || undefined);
+const dateParams = ref('');
+const alphabeticalParams = ref('');
+
 onMounted(async () => {
     // if (authStore.isAuthenticated && authStore.isClient){
     //     isClient.value = true;
     //     fetchFreelances();
     // }
     await fetchFreelances();
+});
+
+watch([currentPage,queryParams,dateParams,alphabeticalParams], 
+    ([newPage,newQuery,newDate,newAlphabet] , [oldPage,oldQuery,oldDate,oldAlphabet]) => {
+    //make statements if > else if 
+    if (newPage !== oldPage) {
+        freelancesPaginated.value = freelances.value.slice(startCurrentPage.value,endCurrentPage.value);
+    }
+
+    if (newQuery !== oldQuery) {
+        currentPage.value = 1;
+        alphabeticalParams.value = '';
+        dateParams.value = '';
+        fetchFreelancesDebounced();
+    }
+
+    if (newDate !== oldDate) {
+        currentPage.value = 1;
+        alphabeticalParams.value = ''; 
+        freelancesPaginated.value.reverse();
+    }
+
+    if (newAlphabet == 'ASC') {
+        currentPage.value = 1;
+        dateParams.value = '';
+        freelancesPaginated.value.sort((a,b) => a.title.localeCompare(b.title));
+    } 
+    
+    if (newAlphabet == 'DESC') {
+        currentPage.value = 1;
+        dateParams.value = '';
+        freelancesPaginated.value.sort((a,b) => b.title.localeCompare(a.title));
+    }
+
+    router.replace({
+        query:{
+            page: currentPage.value || undefined,
+            q: queryParams.value || undefined,
+        }
+    })
 });
 
 watch(freelanceIndexToEdit, () => { //watches the freelance object and re-assigns value to v-model
@@ -48,6 +105,38 @@ watch(freelanceIndexToEdit, () => { //watches the freelance object and re-assign
         rate.value = objectToEdit.rate;
     }
 });
+
+const toggleSortDate = (type) => {
+    dateParams.value = type;
+}
+
+const toggleSortAlphabetical = (type) => {
+    alphabeticalParams.value = type;
+}
+
+const switchPage = (page) => {
+    if (page >= 1 && page <= numberOfPage.value){
+        endCurrentPage.value = page * itemsPerPage;
+        startCurrentPage.value = endCurrentPage.value - itemsPerPage;
+        currentPage.value = page;
+    }
+}
+
+const clearFilter = () => {
+    currentPage.value = 1;
+    queryParams.value = undefined;
+    dateParams.value = '';
+    alphabeticalParams.value = '';
+
+    switchPage(1);
+
+    router.replace({
+        query:{
+            page: undefined,
+            q: undefined,
+        }
+    })
+}
 
 // Function to toggle dropdown for each row
 const toggleDropdown = (id) => {
@@ -185,12 +274,26 @@ function emptyEditInput(){ //empty the freelance object and nulls the form value
     rate.value = null;
 }
 
+const fetchFreelancesDebounced = debounce(fetchFreelances, 500);
+
 async function fetchFreelances(){
     try{
-        const response = await api.get('/freelances/client',{
+        const response = await api.get('/freelances/client',
+        {
+            params: {
+                query: queryParams.value || null,
+            }
+        },
+        {
             withCredentials:true
         });
         freelances.value = response.data.data|| [];
+        const totalItems = freelances.value.length || 0;
+        numberOfPage.value = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+        if (route.query.page) {
+            switchPage(parseInt(route.query.page));
+        } 
+        freelancesPaginated.value = freelances.value.slice(startCurrentPage.value,endCurrentPage.value);
     } catch (error){
         console.error(error);
     }
@@ -283,68 +386,49 @@ async function updateStatusFreelance() {
 </script>
 
 <template>
+    <div class="flex items-center gap-4 my-4">
+        <div class="flex-1">
+            <div class="relative">
+                <InputBox class="w-full h-12 px-8" placeholder="Search..." v-model="queryParams"/>
+                <Search class="absolute right-4 top-3 cursor-pointer"></Search>
+            </div>
+        </div>
+        <div class="flex-none">
+            <button @click="clearFilter()" class="bg-red-500 cursor-pointer text-white h-12 rounded-xl 
+                hover:opacity-80 ml-auto flex items-center justify-center gap-2 my-4 p-4">
+                <Eraser/>
+                Clear filter
+            </button>
+        </div>
+    </div>
 
-    <button @click="toggleProjectModal('Create')" class="bg-blue-500 cursor-pointer text-white h-12 rounded-xl 
-        hover:opacity-80 ml-auto flex items-center justify-center gap-2 my-4 p-4">
-        <Plus/>
-        Add new project
-    </button>
+    <div class="ml-auto mb-12">
+        <button @click="toggleProjectModal('Create')" class="bg-blue-500 cursor-pointer text-white h-12 rounded-xl 
+            hover:opacity-80 ml-auto flex items-center justify-center gap-2 my-4 p-4">
+            <Plus/>
+            Add new project
+        </button>
+    </div>
     
-    <!-- <button id="dropdownRadioButton" data-dropdown-toggle="dropdownRadio" class="w-40 inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700" type="button">
-        <svg class="w-3 h-3 text-gray-500 dark:text-gray-400 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 0a10 10 0 1 0 10 10A10.011 10.011 0 0 0 10 0Zm3.982 13.982a1 1 0 0 1-1.414 0l-3.274-3.274A1.012 1.012 0 0 1 9 10V6a1 1 0 0 1 2 0v3.586l2.982 2.982a1 1 0 0 1 0 1.414Z"/>
-            </svg>
-        Last 30 days
-        <svg class="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
-        </svg>
-    </button>
-
-    <div id="dropdownRadio" class="z-10 hidden w-48 bg-white divide-y divide-gray-100 rounded-lg shadow-sm dark:bg-gray-700 dark:divide-gray-600" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="top" style="position: absolute; inset: auto auto 0px 0px; margin: 0px; transform: translate3d(522.5px, 3847.5px, 0px);">
-        <ul class="p-3 space-y-1 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownRadioButton">
-            <li>
-                <div class="flex items-center p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600">
-                    <input id="filter-radio-example-1" type="radio" value="" name="filter-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="filter-radio-example-1" class="w-full ms-2 text-sm font-medium text-gray-900 rounded-sm dark:text-gray-300">Last day</label>
-                </div>
-            </li>
-            <li>
-                <div class="flex items-center p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600">
-                    <input checked="" id="filter-radio-example-2" type="radio" value="" name="filter-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="filter-radio-example-2" class="w-full ms-2 text-sm font-medium text-gray-900 rounded-sm dark:text-gray-300">Last 7 days</label>
-                </div>
-            </li>
-            <li>
-                <div class="flex items-center p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600">
-                    <input id="filter-radio-example-3" type="radio" value="" name="filter-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="filter-radio-example-3" class="w-full ms-2 text-sm font-medium text-gray-900 rounded-sm dark:text-gray-300">Last 30 days</label>
-                </div>
-            </li>
-            <li>
-                <div class="flex items-center p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600">
-                    <input id="filter-radio-example-4" type="radio" value="" name="filter-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="filter-radio-example-4" class="w-full ms-2 text-sm font-medium text-gray-900 rounded-sm dark:text-gray-300">Last month</label>
-                </div>
-            </li>
-            <li>
-                <div class="flex items-center p-2 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600">
-                    <input id="filter-radio-example-5" type="radio" value="" name="filter-radio" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                    <label for="filter-radio-example-5" class="w-full ms-2 text-sm font-medium text-gray-900 rounded-sm dark:text-gray-300">Last year</label>
-                </div>
-            </li>
-        </ul>
-    </div> -->
-    <br><br>
-
     <div class="relative overflow-x-auto shadow-md sm:rounded-lg min-h-screen">
         <table class="w-full min-h-96 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
                     <th scope="col" class="px-6 py-3">
-                        Date Posted
+                        <div class="flex items-center gap-1 ">
+                            Date Posted
+                            <ArrowDown v-if="dateParams == '' || dateParams == 'DESC'" 
+                                class="h-3 w-3 cursor-pointer" @click="toggleSortDate('ASC')"/>
+                            <ArrowUp v-else class="h-3 w-3 cursor-pointer" @click="toggleSortDate('DESC')"/>
+                        </div>
                     </th>
                     <th scope="col" class="px-6 py-3">
-                        Title
+                        <div class="flex items-center gap-1 ">
+                            Title
+                            <ArrowDown v-if="alphabeticalParams == '' || alphabeticalParams == 'DESC'" 
+                                class="h-3 w-3 cursor-pointer" @click="toggleSortAlphabetical('ASC')"/>
+                            <ArrowUp v-else class="h-3 w-3 cursor-pointer" @click="toggleSortAlphabetical('DESC')"/>
+                        </div>
                     </th>
                     <th scope="col" class="px-6 py-3">
                         Number of proposals
@@ -358,8 +442,7 @@ async function updateStatusFreelance() {
                 </tr>
             </thead>
             <tbody>
-                <!-- ADD V IF LENGTH -->
-                <tr v-if="freelances.length > 0" v-for="(freelance,index) in freelances" :key="freelance?.id"
+                <tr v-if="freelancesPaginated.length > 0" v-for="(freelance,index) in freelancesPaginated" :key="freelance?.id"
                     class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                         {{new Date(freelance?.date_posted).toLocaleDateString("en-US", { year:'numeric',month:'long',day:'numeric' })}}
@@ -406,7 +489,6 @@ async function updateStatusFreelance() {
                 <tr v-else>
                     <td colspan="5" class="text-center">No projects yet.</td>
                 </tr>
-                <!-- ADD V ELSE LENGTH -->
             </tbody>
         </table>
         <!-- <nav class="flex items-center flex-column flex-wrap md:flex-row justify-between pt-4 p-5" aria-label="Table navigation">
@@ -435,6 +517,17 @@ async function updateStatusFreelance() {
                 </li>
             </ul>
         </nav> -->
+    </div>
+
+    <div class="flex my-12 float-right gap-2">
+        <div v-for="(page,index) in numberOfPage" :key="index"
+            :class="{
+                'h-12 w-12 bg-gray-100 flex items-center justify-center cursor-pointer': true,
+                'bg-gray-300': parseInt(currentPage) === index + 1
+            }"
+            @click="switchPage(page)">
+            {{ page }}
+        </div>
     </div>
 
     <!-- ADD AND EDIT MODAL -->

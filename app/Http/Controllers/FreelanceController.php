@@ -173,15 +173,30 @@ class FreelanceController extends Controller
         return response($this->response,$this->response_code);
     }
 
-    public function getClientFreelanceProjects(){
+    public function getClientFreelanceProjects(Request $request){
         $user = $this->getUser();
-        $freelances = Freelance::where('client_id',$user->id)->orderBy('created_at','DESC')->get();
+        $query = Str::lower($request->input('query',''));
+        $date = $request->input('date','DESC');
+        $alphabetical = $request->input('alphabetical','');
+
+        $freelances = Freelance::where('client_id',$user->id)
+                        ->when(!empty($query), function ($q) use ($query){
+                            $q->where('title','LIKE',"%".$query."%")
+                                ->orWhere('status',$query);
+                        })
+                        ->when(!empty($alphabetical), function($q) use ($alphabetical) {
+                            $q->orderBy('title',$alphabetical);
+                        })
+                        ->orderBy('created_at',$date)
+                        ->get();
+
         $this->response = [
             'msg' => 'Client list of freelance projects',
             'status' => true,
             'status_code' => 'CLIENT_LIST_FREELANCE_PROJECTS'
         ] + FreelanceClientResource::collection($freelances)->response()->getData(true);
         $this->response_code = 200;
+
         return response()->json($this->response,$this->response_code);
     }
 
