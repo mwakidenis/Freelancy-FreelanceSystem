@@ -2,9 +2,9 @@
 import { ref,onMounted } from 'vue';
 import api from '../../../api';
 import { useAuthStore } from '../../../authStore';
-import { CircleUserRound,Pencil, Save, CircleX, CircleMinus, Plus, CircleCheck} from 'lucide-vue-next';
-import { ClipLoader } from 'vue-spinner/dist/vue-spinner.min.js'
+import { CircleUserRound,Pencil, Save, CircleX, CircleMinus, Plus} from 'lucide-vue-next';
 import moment from 'moment';
+import Swal from 'sweetalert2';
 
 const authStore = useAuthStore();
 
@@ -23,9 +23,6 @@ const skillInput = ref(''); //edit value for individual skill
 
 //modal config
 const savingMessage = ref('Save changes?');
-const isConfirmation = ref(false);
-const isLoading = ref(false);
-const isSaved = ref(false);
 const isError = ref(false);
 
 onMounted(async () => {
@@ -33,15 +30,16 @@ onMounted(async () => {
 });
 
 const toggleModal = (edit) => {
+    savingMessage.value = "Save changes?";
     isEditOpen.value = edit == 'close' ? false : true;
     objectToEdit.value = edit;
 
     if (edit == 'description'){
         tempEditInput.value = user.value.brief_description;
     } else if (edit == 'educational_attainment'){
-        tempEditInput.value = user.value.educational_attainment;
+        tempEditInput.value = user.value.educational_attainment ?? [];
     } else if (edit == 'work_experience'){
-        tempEditInput.value = user.value.work_experience;
+        tempEditInput.value = user.value.work_experience ?? [];
     } else if (edit == 'skills'){
         var temp = user.value.skills;
         if (temp) tempEditInput.value = JSON.parse(temp);
@@ -76,73 +74,36 @@ const removeExperienceInput = (index) => {
     tempEditInput.value.splice(index['index'],1);
 }
 
-const saveChanges = () => { //opens confirmation modal
-    isConfirmation.value = true;
-}
+const confirmAndProcess = async () => {
+  const result = await Swal.fire({ //swal confirmation modal 
+    text: savingMessage.value,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes',
+    confirmButtonColor: '#22c55e',
+    cancelButtonText: 'Cancel',
+    cancelButtonColor: "#ef4444",
+  })
 
-const confirmChanges = () => { //upon clicking yes on confirmation modal
-    savingMessage.value = "Saving changes ...";
-    isLoading.value = true;
-    const formData = new FormData();
-    formData.append('type',objectToEdit.value);
-    if (objectToEdit.value == 'description'){
-        formData.append('tempEditInput',tempEditInput.value);
-    } else {
-        formData.append('tempEditInput',JSON.stringify(tempEditInput.value));
-    }
-    setTimeout(async() => {
-        try {
-            const response = await api.post(`profile/edit/update_profile`,formData,{withCredentials:true});
-            savingMessage.value = "Successfully saved the changes!";
-            switch (objectToEdit.value){
-                case "description":
-                    tempEditInput.value = response.data.data;
-                    description.value = response.data.data; 
-                    user.value.brief_description = response.data.data;  
-                    break;
-                case "educational_attainment":
-                    tempEditInput.value = response.data.data;
-                    educationalAttainment.value = response.data.data; 
-                    user.value.educational_attainment = response.data.data;  
-                    break;
-                case "work_experience":
-                    tempEditInput.value = response.data.data;
-                    workExperiences.value = response.data.data; 
-                    user.value.work_experience = response.data.data;  
-                    break;
-                case "skills":
-                    tempEditInput.value = JSON.parse(response.data.data);
-                    skills.value = JSON.parse(response.data.data); 
-                    user.value.skills = response.data.data;  
-                    break;
-                default:
-                    break;
-            }
-        } catch (error){
-            savingMessage.value  = "Error";
-            isError.value = true;
-            console.error(error);
-        } finally {
-            isSaved.value = true;
-        }
-    },2000);
+  if (result.isConfirmed) { 
+    Swal.fire({ //swal loading
+      text: "Saving changes ...",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading()
+      }
+    })
 
-    setTimeout(() => {
-        isConfirmation.value = false;
-        savingMessage.value = "Save changes?";
-        isLoading.value = false;
-        isSaved.value = false;
-        isError.value = false;
+    await updateProfile();
 
-        isEditOpen.value = false;
-        objectToEdit.value = null;
-        tempEditInput.value = null;
-        skillInput.value = null;
-    },4000);
-}
-
-const declineChanges = () => { //upon clicking no on confirmation modal and just closes it
-    isConfirmation.value = false;
+    Swal.fire({ //swal result
+      text: savingMessage.value,
+      icon: isError.value == true ? 'error' : 'success',
+      timer: 1500,
+      showConfirmButton: false
+    })
+    
+  }
 }
 
 async function fetchProfile(){
@@ -157,6 +118,60 @@ async function fetchProfile(){
     } catch (error){
         console.error(error);
     }
+}
+
+async function updateProfile() {
+    const formData = new FormData();
+    formData.append('type',objectToEdit.value);
+    if (objectToEdit.value == 'description'){
+        formData.append('tempEditInput',tempEditInput.value);
+    } else {
+        formData.append('tempEditInput',JSON.stringify(tempEditInput.value));
+    }
+    
+    return new Promise((resolve) => {
+        setTimeout(async() => {
+            try {
+                const response = await api.post(`profile/edit/update_profile`,formData,{withCredentials:true});
+                savingMessage.value = "Successfully saved the changes!";
+                switch (objectToEdit.value){
+                    case "description":
+                        tempEditInput.value = response.data.data;
+                        description.value = response.data.data; 
+                        user.value.brief_description = response.data.data;  
+                        break;
+                    case "educational_attainment":
+                        tempEditInput.value = response.data.data;
+                        educationalAttainment.value = response.data.data; 
+                        user.value.educational_attainment = response.data.data;  
+                        break;
+                    case "work_experience":
+                        tempEditInput.value = response.data.data;
+                        workExperiences.value = response.data.data; 
+                        user.value.work_experience = response.data.data;  
+                        break;
+                    case "skills":
+                        tempEditInput.value = JSON.parse(response.data.data);
+                        skills.value = JSON.parse(response.data.data); 
+                        user.value.skills = response.data.data;  
+                        break;
+                    default:
+                        break;
+                }
+                isError.value = false;
+            } catch (error){
+                savingMessage.value  = "Error";
+                isError.value = true;
+                console.error(error);
+            } finally {
+                resolve();
+                isEditOpen.value = false;
+                objectToEdit.value = null;
+                tempEditInput.value = null;
+                skillInput.value = null;
+            }
+        }, 2000);
+    });
 }
 </script>
 
@@ -201,7 +216,7 @@ async function fetchProfile(){
                     </p>
                     <div v-if="skills.length > 0" class="flex flex-wrap gap-4">
                         <div v-for="(skill) in skills">
-                            <div class="bg-blue-500 text-white w-32 h-8 rounded-xl
+                            <div class="bg-blue-500 text-white min-w-32 max-w-auto h-8 rounded-xl
                                 flex items-center justify-center text-sm text-center p-4">
                                 {{ skill }}
                             </div>
@@ -373,7 +388,7 @@ async function fetchProfile(){
                 </div>
 
                 <div class="ml-auto flex gap-4  relative fixed bottom-0 ">
-                    <button @click="saveChanges()"
+                    <button @click="confirmAndProcess()"
                         class="bg-green-500 cursor-pointer text-white w-24 h-12 rounded-xl hover:opacity-80 ml-auto
                             flex items-center justify-center gap-2">
                         <span><Save class="w-4 h-4"/></span> Save
@@ -387,43 +402,4 @@ async function fetchProfile(){
             </div>
         </div>
     </div>
-
-    <!-- CONFIRMATION MODEL -->
-    <div v-if="isConfirmation == true">
-        <div class="fixed inset-0 bg-black opacity-70 z-40"></div> 
-        <div class="fixed inset-0 flex justify-center items-center z-40">
-            <div class="bg-white w-2/5 h-1/5 p-6 rounded-lg shadow-lg flex flex-col items-center gap-8 p-4">
-                <div class="text-center">
-                    {{ savingMessage }}
-                </div>
-
-                <div v-if="isSaved == false">
-                    <div v-if="isLoading == false" class="flex justify-center gap-2">
-                        <button @click="confirmChanges"
-                            class="bg-green-500 cursor-pointer text-white w-16 h-8 rounded-xl hover:opacity-80">
-                            Yes
-                        </button>
-                        <button @click="declineChanges"
-                            class="bg-red-500 cursor-pointer text-white w-16 h-8 rounded-xl hover:opacity-80">
-                            No
-                        </button>
-                        
-                    </div>
-                    <div v-else class="flex justify-center gap-2">
-                        <clip-loader :loading="loading" color="#2b7fff" :size="size"></clip-loader>
-                    </div>
-                </div>
-                <div v-else>
-                    <div v-if="isError == true">
-                        <CircleX class="text-red-500 md:h-12 h-8 md:w-12 w-8"/>
-                    </div> 
-                    <div v-else>
-                        <CircleCheck class="text-green-500 md:h-12 h-8 md:w-12 w-8"/>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
 </template> 
