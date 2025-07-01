@@ -9,7 +9,8 @@ import Login from "../components/pages/Login.vue";
 import Register from "../components/pages/Register.vue";
 import EmailVerify from "../components/pages/EmailVerify.vue";
 import EmailVerifySubmit from "../components/pages/EmailVerifySubmit.vue";
-// FOR FREELANCE MODULE
+// FOR FREELANCER MODULE
+import FreelanceViewProposals from "../components/pages/Freelance/ViewProposals.vue";
 import FreelanceView from "../components/pages/Freelance/View.vue";
 import FreelanceApply from "../components/pages/Freelance/Apply.vue";
 // FOR CLIENT MODULE
@@ -56,6 +57,7 @@ const routes = [
                 component: ClientViewProposals,
                 name: "client-view-proposals"
             },
+            // PROFILE
             {
                 path: '/profile/:username',
                 component: ViewProfile,
@@ -66,6 +68,13 @@ const routes = [
                 component: EditProfile,
                 name: "edit-profile"
             },
+            // FREELANCERS
+            {
+                path: '/proposals',
+                component: FreelanceViewProposals,
+                name: "freelancer-view-proposals"
+            },
+            //
             // {
             //     path: '/:username/message',
             //     component: Message,

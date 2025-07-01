@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Models\{Freelance,User};
+use Str;
 
 class ProposalResource extends JsonResource
 {
@@ -36,9 +37,9 @@ class ProposalResource extends JsonResource
                 'freelancer_name' => $freelancer->name,
                 'freelancer_username' => $freelancer->username,
                 'description' => $this->description,    
-                'status' => $this->status,
-                'created_at' => $freelance->created_at,
-                'updated_at' => $freelance->updated_at,
+                'status' => Str::ucfirst($this->status),
+                'created_at' => $this->created_at,
+                'updated_at' => $this->updated_at,
             ]
         ];
     }

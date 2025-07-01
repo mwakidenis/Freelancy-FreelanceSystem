@@ -19,7 +19,7 @@ const clientDetails = ref('');
 const description = ref('');
 
 onMounted(() => {
-    if (authStore.isAuthenticated && authStore.isFreelancer){
+    if (authStore.isAuthenticated && authStore.getUserRole == 'freelancer'){
         isFreelancer.value = true;
         checkIfUserCanApply();
         if (canApply) fetchFreelance();

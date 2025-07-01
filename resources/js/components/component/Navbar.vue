@@ -16,6 +16,9 @@ const authStore = useAuthStore();
             <div>
                 <router-link :to="{name:'client-view-projects'}">Projects</router-link>
             </div>
+            <div>
+                <router-link :to="{name:'freelancer-view-proposals'}">Proposals</router-link>
+            </div>
             <router-link :to="{name:'edit-profile'}">
                 Profile
             </router-link>

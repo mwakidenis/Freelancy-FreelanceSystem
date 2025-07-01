@@ -28,9 +28,9 @@ export const useAuthStore = defineStore("auth", {
         const response = await api.get("/auth/user", {
           withCredentials: true,
         });
-        this.user = response.data;
-        console.log("user data is:",this.user);
-        return response.data;
+        this.user = response.data.data;
+        console.log("response from check auth method: ", response.data.data);
+        return response.data.data;
       } catch (error) {
         this.user = null;
         console.log(error);
@@ -51,8 +51,8 @@ export const useAuthStore = defineStore("auth", {
   },
   getters: {
     isAuthenticated: (state) => !!state.user,
-    getUser: (state) => state.user?.data,
-    getUserRole: (state) => state.user?.data.user_type,
+    getUser: (state) => state.user,
+    getUserRole: (state) => state.user.user_type,
     //below returns error!
     // getUserName: (state) => state.user?.data.name, 
     // isFreelancer: (state) => state.user?.data.user_type === 'freelancer',

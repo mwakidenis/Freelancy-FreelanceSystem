@@ -24,14 +24,14 @@ class ProposalController extends Controller
     protected function freelancerCanApply($id=null)
     {
         $user = $this->getUser();
-        $exists = Proposal::where('freelance_id',$id)
+        return Proposal::where('freelance_id',$id)
                         ->where('freelancer_id',$user->id)
                         ->whereIn('status',['pending','completed'])
                         ->count() ? false : true;
     }
 
     public function checkIfFreelancerCanApply($slug=null)
-    {   
+    {     
         $freelance = Freelance::where('slug',$slug)->first();
         if(!$freelance){
             $this->response = [
@@ -41,7 +41,7 @@ class ProposalController extends Controller
             $this->response_code = 404;
             goto callback;
         }
-        $canApply = $this->freelancerCanApply($freelance->id);
+        $canApply = $this->freelancerCanApply($freelance->id);  
         if (!$canApply){
             $this->response = [
                 'msg' => 'You cannot send multiple proposal to a similar freelance project',
@@ -92,6 +92,7 @@ class ProposalController extends Controller
             $proposal->freelance_id = $freelance->id;
             $proposal->freelancer_id = $user->id;
             $proposal->description = $request->input('description');
+            $proposal->status = 'pending';
             $proposal->save();
             DB::commit();
             $this->response = [
@@ -133,5 +134,68 @@ class ProposalController extends Controller
         $this->response_code = 200;
         callback:
         return response()->json($this->response,$this->response_code);
+    }
+
+    public function getFreelancerProposals(Request $request)
+    {
+        $user = $this->getUser();
+        $query = $request->input('query','');
+        $proposals = Proposal::with(['freelance'])
+            ->when(!empty($query) , function ($q) use ($query) {
+                $q->whereHas('freelance', function($q) use ($query) {
+                    $q->where('title','LIKE',"%".$query."%");
+                })
+                ->orWhere('status','LIKE',"%".$query."%");
+            })
+            ->where('freelancer_id',$user->id)
+            ->paginate($this->per_page);
+        $this->response = [
+            'msg' => 'List of proposals',
+            'status' => true,
+            'status_code' => 'LIST_OF_PROPOSALS'
+        ] + ProposalResource::collection($proposals)->response()->getData(true);
+        $this->response_code = 200;
+        return response()->json($this->response,$this->response_code);
+    }
+
+    public function updateProposalStatus(Request $request,$id=null)
+    {
+        $user = $this->getUser();
+        $proposal = Proposal::where('freelancer_id',$user->id)
+                    ->where('id',$id)
+                    ->first();
+        if (!$proposal){
+            $this->response = [
+                'msg' => 'Proposal not found',
+                'status' => false,
+                'status_code' => 'PROPOSAL_NOT_FOUND'
+            ];
+            $this->response_code = 404;
+            goto callback;
+        }
+        $type = Str::lower($request->input('type'));
+        DB::beginTransaction();
+        try {
+            $proposal->status = $type == 'withdraw' ? 'withdrawn' : 'done';
+            $proposal->save();
+            DB::commit();
+            $this->response = [
+                'msg' => `Proposal has been marked as ${type}`,
+                'status' => true,
+                'status_code' => 'PROPOSAL_' . Str::upper($type),
+                'data' => new ProposalResource($proposal)
+            ];
+            $this->response_code = 200;
+            callback:
+            return response()->json($this->response,$this->response_code);
+        } catch (\Exception $e){
+            $this->response = [
+                'msg' => $e->getMessage(),
+                'status' => false,
+                'status_code' => 'ERROR'
+            ];
+            $this->response_code = 404;
+            return response()->json($this->response,$this->response_code);
+        }
     }
 }

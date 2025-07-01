@@ -51,7 +51,7 @@ class AuthController extends Controller
         return response()->json(['message'=>'Login successfully'])->withCookie($cookie);
     }
 
-    public function getUser()
+    public function checkUser()
     {   
         try {
             $token = Cookie::get('auth_token'); 

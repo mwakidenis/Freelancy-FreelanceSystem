@@ -36,7 +36,7 @@ Route::group(['namespace'=>'App\Http\Controllers'], function() {
 
     Route::group(['prefix'=>'auth', 'as'=>'auth.'], function() {
         Route::post('/login',['as'=>'login','uses'=>'AuthController@auth']);
-        Route::get('/user',['as'=>'user','uses'=>'AuthController@getUser']);
+        Route::get('/user',['as'=>'user','uses'=>'AuthController@checkUser']);
         Route::post('/logout',['as'=>'logout','uses'=>'AuthController@logout']);
         Route::post('/register',['as'=>'register','uses'=>'AuthController@register']);
     });
@@ -103,15 +103,19 @@ Route::group(['prefix'=>'freelances','as'=>'freelances.','namespace'=>'App\Http\
 });
 
 Route::group(['prefix'=>'users','as'=>'users.','namespace'=>'App\Http\Controllers'], function() {
-    // remove this
+    // remove this this is done
     Route::get('/freelances',['uses'=>'UserController@getUserFreelances']); //api/user/freelances - GET user's freelances  > getUserFreelances
-    // remove this
+    // remove this this is not yet done
     Route::get('/proposals',['uses'=>'UserController@getUserProposals']); //api/user/proposal - GET user's proposals > getUserProposals
 
     Route::get('/freelances/{slug?}/proposals',['uses'=>'UserController@getProposalsFromSingleFreelance','middleware'=>['api.check_if_own_freelance_project']]);
 }); 
 
 Route::group(['prefix'=>'proposals','as'=>'proposals.','namespace'=>'App\Http\Controllers'], function() {
+    Route::group(['prefix'=>'freelancer','as'=>'freelancer.'], function () {
+        Route::get('/',['uses'=>'ProposalController@getFreelancerProposals']);
+        Route::put('/{id?}',['uses'=>'ProposalController@updateProposalStatus']);
+    });
     Route::post('/{slug?}',['uses'=>'ProposalController@store', 'middleware'=>['api.auth','api.check_if_freelancer']]); // POST apply to a freelance > store
     Route::get('/{slug?}',['uses'=>'ProposalController@show']); // GET single proposal > show
     Route::get('/{slug?}/check',['uses'=>'ProposalController@checkIfFreelancerCanApply']); // GET check if user has duplicate application to a project

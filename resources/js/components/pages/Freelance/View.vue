@@ -25,7 +25,7 @@ async function fetchFreelance(){
         freelanceDetails.value = response.data.data.freelance_project_details;
         clientDetails.value = response.data.data.client_details;
 
-        if (authStore.isAuthenticated && authStore.isFreelancer){
+        if (authStore.isAuthenticated && authStore.getUserRole == 'freelancer'){
             isFreelancer.value = true;
             checkIfUserCanApply();
         }
@@ -37,6 +37,7 @@ async function fetchFreelance(){
 async function checkIfUserCanApply() {
     try {
         const response = await api.get(`/proposals/${slug.value}/check`);
+        // console.log("response: ", response);
         if (response.status === 200) canApply.value = true;
     } catch (error){
         console.error(error);

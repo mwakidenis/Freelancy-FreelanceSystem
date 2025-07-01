@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id('id');
             $table->string('freelance_id');
             $table->string('freelancer_id');
-            $table->string('description');
-            $table->string('remarks')->nullable();
-            $table->string('status')->default('pending');
+            $table->text('description');
+            $table->text('remarks')->nullable();
+            $table->string('status');
             $table->timestamps();
             $table->softDeletes();
         });

@@ -293,7 +293,7 @@ async function fetchFreelances(){
         if (route.query.page) {
             switchPage(parseInt(route.query.page));
         } 
-        freelancesPaginated.value = freelances.value.slice(startCurrentPage.value,endCurrentPage.value);
+        freelancesPaginated.value = freelances.value.length > 0 ? freelances.value.slice(startCurrentPage.value,endCurrentPage.value) : [] ;
     } catch (error){
         console.error(error);
     }
@@ -311,6 +311,7 @@ async function createNewFreelance() {
             try {
             const response = await api.post('/freelances/client', formData, { withCredentials: true });
             freelances.value.unshift(response.data.data);
+            freelancesPaginated.value.unshift(response.data.data);
             savingMessage.value = "Successfully created a project!";
             isError.value = false;
             } catch (error) {
