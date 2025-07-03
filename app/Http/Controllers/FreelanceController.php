@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Cookie;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Http\Request;
 use App\Models\{Freelance,Proposal};
-use App\Http\Resources\{FreelanceFreelancerResource,ProposalResource,FreelanceClientResource};
+use App\Http\Resources\{FreelanceFreelancerResource,ProjectResource,FreelanceClientResource,ProposalResource};
 use DB,Str;
 
 class FreelanceController extends Controller
@@ -140,6 +140,100 @@ class FreelanceController extends Controller
         return response()->json($this->response,$this->response_code);
     }
 
+    public function showProposals($slug=null){
+        $freelance = Freelance::where('slug',$slug)->first();
+        if (!$freelance){
+            $this->response = [
+                'msg' => 'Freelance project not found',
+                'status' => false,
+                'status_code' => 'FREELANCE_NOT_FOUND'
+            ];
+            $this->response_code = 404;
+            goto callback;
+        }
+        $proposals = Proposal::where('freelance_id',$freelance->id)
+            // ->where('status','pending')
+            ->get();
+        $this->response = [
+            'msg' => 'List of proposals for ' . $freelance->slug, 
+            'status' => true,
+            'status_code' => 'LIST_PROPOSAL_' . Str::upper($freelance->slug)
+        ] + ProposalResource::collection($proposals)->response()->getData(true);
+        $this->response_code = 200;
+        callback:
+        return response()->json($this->response,$this->response_code);
+    }
+
+    public function processProposal(Request $request,$id=null){
+        $user = $this->getUser();
+        $proposal = Proposal::where('id',$id)->first();
+        if(!$proposal){
+            $this->response = [
+                'msg' => 'Proposal not found',
+                'status' => false,
+                'status_code' => 'PROPOSAL_NOT_FOUND'
+            ];
+            $this->response_code = 404;
+            goto callback;
+        }
+        $freelance = Freelance::where('id',$proposal->freelance_id)->first();
+        if ($user->id != $freelance->client_id){
+            $this->response = [
+                'msg' => 'Unauthorized',
+                'status' => false,
+                'status_code' => 'UNAUTHORIZED'
+            ];
+            $this->response_code = 401;
+            goto callback;
+        }
+
+        $type = Str::lower($request->input('type')); //either accept or reject
+        $status = $type == 'accept' ? 'in progress' : 'declined';
+
+        DB::beginTransaction();
+        try {
+            $proposal->status = $status;
+            $proposal->remarks = $request->input('remarks');
+            $proposal->save();
+
+            if ($type == 'accept'){
+                $proposals = Proposal::where('freelance_id',$proposal->freelance_id)
+                                    ->where('status', 'pending')
+                                    ->where('id','<>',$proposal->id)
+                                    ->get();
+
+                foreach ($proposals as $proposal) {
+                    $proposal->status = 'declined';
+                    $proposal->remarks = 'Other proposal has been accepted. Thank you for applying.';
+                    $proposal->save();
+                }
+
+                $freelance->status = 'in progress';
+                $freelance->save();
+            }
+            
+            DB::commit();
+            $msgStatus = $type == 'accept' ? 'accepted' : 'declined';
+            $this->response = [
+                'msg' => `Proposal has been ${msgStatus}`,
+                'status' => true,
+                'status_code' => Str::upper(`PROPOSAL_${msgStatus}`)
+            ];
+            $this->response_code = 200;
+        } catch (\Exception $e) {
+            DB::rollback();
+            $this->response = [
+                'msg' => $e->getMessage(),
+                'status' => false,
+                'status_code' => 'ERROR'
+            ];
+            $this->response_code = 500;
+        }
+
+        callback:
+        return response()->json($this->response,$this->response_code);
+    }
+
     public function update(Request $request, $slug=null){
         $freelance = Freelance::where('slug',$slug)->first();
         $type = $request->input('type');
@@ -200,7 +294,7 @@ class FreelanceController extends Controller
         return response()->json($this->response,$this->response_code);
     }
 
-    public function showAllProposals($slug=null){
+    public function showAllProposals($slug=null){ //delete
         $freelance = Freelance::where('slug',$slug)->first();
         if (!$freelance){
             $this->response = [
@@ -225,7 +319,7 @@ class FreelanceController extends Controller
             'msg' => 'Proposal list',
             'status' => true,
             'status_code' => 'PROPOSAL_LIST',
-        ] + ProposalResource::Collection($proposals)->response()->getData(true);
+        ] + ProposalResource::collection($proposals)->response()->getData(true);
         $this->response_code = 200;
         callback:
         return response()->json($this->response,$this->response_code);

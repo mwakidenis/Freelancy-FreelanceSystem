@@ -16,6 +16,12 @@ class Freelance extends Model
                         ->count();
     }
 
+    public function getNumberOfAcceptedAttribute(){
+        return Proposal::where('freelance_id',$this->id)
+                        ->whereIn('status',['in progress','done'])
+                        ->count();
+    }
+
     public function getNumberOfPendingAttribute(){
         return Proposal::where('freelance_id',$this->id)
                         ->where('status','pending')

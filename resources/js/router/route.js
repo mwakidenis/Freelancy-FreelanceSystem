@@ -47,8 +47,8 @@ const routes = [
                 component: ClientViewProjects,
                 name: "client-view-projects"
             },
-            {
-                path: '/projects/:slug',
+            { //check if remove
+                path: '/projects/:slug', 
                 component: ClientViewSingleProject,
                 name: "client-view-single-project" 
             },

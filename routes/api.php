@@ -96,6 +96,8 @@ Route::group(['prefix'=>'freelances','as'=>'freelances.','namespace'=>'App\Http\
     Route::get('/',['uses'=>'FreelanceController@index']); //api/freelances - GET all freelances GENERAL
     // Route::
     Route::get('/{slug?}',['uses'=>'FreelanceController@show']); //api/freelances/{id} - GET single freelance > show 
+    Route::get('/{slug?}/proposals',['uses'=>'FreelanceController@showProposals']);
+    Route::put('/{id?}',['uses'=>'FreelanceController@processProposal']);
     // Route::get('/{slug?}/proposals',['uses'=>'FreelanceController@showAllProposals']); //api/freelances/{slug}/proposals - GET all proposal for a specific project
     //PROBLEM!! the freelances/{slug?} is conflicting with freelances/client/* 
     //for client 
@@ -105,7 +107,7 @@ Route::group(['prefix'=>'freelances','as'=>'freelances.','namespace'=>'App\Http\
 Route::group(['prefix'=>'users','as'=>'users.','namespace'=>'App\Http\Controllers'], function() {
     // remove this this is done
     Route::get('/freelances',['uses'=>'UserController@getUserFreelances']); //api/user/freelances - GET user's freelances  > getUserFreelances
-    // remove this this is not yet done
+    // remove this this is done
     Route::get('/proposals',['uses'=>'UserController@getUserProposals']); //api/user/proposal - GET user's proposals > getUserProposals
 
     Route::get('/freelances/{slug?}/proposals',['uses'=>'UserController@getProposalsFromSingleFreelance','middleware'=>['api.check_if_own_freelance_project']]);

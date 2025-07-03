@@ -27,6 +27,7 @@ class FreelanceFreelancerResource extends JsonResource
                 'rate' => $this->rate,
                 'status' => Str::title($this->status),
                 'number_of_total_proposals' => $this->number_of_proposal ?: 0,
+                'number_of_accepted_proposals' => $this->number_of_accepted ?: 0,
                 'number_of_pending_proposals' => $this->number_of_pending ?: 0,
                 'number_of_declined_proposals' => $this->number_of_declined ?: 0,
                 'date_posted' => $this->created_at->toISOString(),

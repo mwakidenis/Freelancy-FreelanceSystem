@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Models\{User,Freelance,Proposal};
-use App\Http\Resources\{FreelanceResource,ProposalResource};
+use App\Http\Resources\{FreelanceResource,ProjectResource};
 use DB,Str;
 
 class UserController extends Controller
@@ -72,7 +72,7 @@ class UserController extends Controller
             'msg' => 'List of proposals',
             'status' => true,
             'status_code' => 'LIST_PROPOSALS'
-        ] + ProposalResource::collection(Proposal::where('freelancer_id',$user->id)
+        ] + ProjectResource::collection(Proposal::where('freelancer_id',$user->id)
                                                     ->paginate($this->per_page))
                                                     ->response()
                                                     ->getData(true);
@@ -97,7 +97,7 @@ class UserController extends Controller
             'msg' => 'List of Proposals',
             'status' => true,
             'status_code' => 'PROPOSAL_LIST'
-        ] + ProposalResource::collection($proposals)
+        ] + ProjectResource::collection($proposals)
                             ->response()
                             ->getData(true);
         $this->response_code = 200;

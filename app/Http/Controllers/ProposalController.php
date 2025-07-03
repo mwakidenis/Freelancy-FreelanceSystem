@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Cookie;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Models\{Proposal,Freelance};
-use App\Http\Resources\{ProposalResource};
+use App\Http\Resources\{ProjectResource};
 use Illuminate\Http\Request;
 use DB,Str;
 
@@ -114,7 +114,7 @@ class ProposalController extends Controller
         return response()->json($this->response,$this->response_code);
     }
 
-    public function show($id=null){
+    public function show($id=null){ //where did i use this 
         $proposal = Proposal::find($id);
         if (!$proposal){
             $this->response = [
@@ -129,7 +129,7 @@ class ProposalController extends Controller
             'msg' => 'View Proposal',
             'status'=> true,
             'status_code' => 'VIEW_PROPOSAL',
-            'data' => new ProposalResource($proposal)
+            'data' => new ProjectResource($proposal)
         ];
         $this->response_code = 200;
         callback:
@@ -153,7 +153,7 @@ class ProposalController extends Controller
             'msg' => 'List of proposals',
             'status' => true,
             'status_code' => 'LIST_OF_PROPOSALS'
-        ] + ProposalResource::collection($proposals)->response()->getData(true);
+        ] + ProjectResource::collection($proposals)->response()->getData(true);
         $this->response_code = 200;
         return response()->json($this->response,$this->response_code);
     }
@@ -183,7 +183,7 @@ class ProposalController extends Controller
                 'msg' => `Proposal has been marked as ${type}`,
                 'status' => true,
                 'status_code' => 'PROPOSAL_' . Str::upper($type),
-                'data' => new ProposalResource($proposal)
+                'data' => new ProjectResource($proposal)
             ];
             $this->response_code = 200;
             callback:
