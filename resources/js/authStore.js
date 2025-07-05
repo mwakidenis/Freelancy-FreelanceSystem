@@ -37,16 +37,20 @@ export const useAuthStore = defineStore("auth", {
       }
     },
     async logout() {
-      try {
-        const response = await api.post("/auth/logout", null, {
-          withCredentials: true,
-        });
-        // console.log("Response is", response);
-
-        this.user = null; // Clear user state
-      } catch (error) {
-        console.log(error);
-      }
+      return new Promise((resolve) => {
+        setTimeout(async() => {
+          try {
+            const response = await api.post("/auth/logout", null, {
+              withCredentials: true,
+            });
+            this.user = null; // Clear user state
+          } catch (error) {
+            console.log(error);
+          } finally {
+            resolve();
+          }
+        }, 2000);
+      });
     }
   },
   getters: {
