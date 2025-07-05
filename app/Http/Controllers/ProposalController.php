@@ -174,10 +174,26 @@ class ProposalController extends Controller
             goto callback;
         }
         $type = Str::lower($request->input('type'));
+        if ($type == 'done' && $proposal->status != 'in progress'){
+            $this->response = [
+                'msg' => 'Proposal is not accepted yet',
+                'status' => false,
+                'status_code' => 'PROPOSAL_NOT_ACCEPTED'
+            ];
+            $this->response_code = 400;
+            goto callback;
+        }
         DB::beginTransaction();
         try {
             $proposal->status = $type == 'withdraw' ? 'withdrawn' : 'done';
             $proposal->save();
+
+            if ($type == 'done'){
+                $freelance = Proposal::where('freelance_id',$proposal->freelance_id)->first();
+                $freelance->status = 'done';
+                $freelance->save();
+            }
+            
             DB::commit();
             $this->response = [
                 'msg' => `Proposal has been marked as ${type}`,
@@ -186,8 +202,6 @@ class ProposalController extends Controller
                 'data' => new ProjectResource($proposal)
             ];
             $this->response_code = 200;
-            callback:
-            return response()->json($this->response,$this->response_code);
         } catch (\Exception $e){
             $this->response = [
                 'msg' => $e->getMessage(),
@@ -195,7 +209,8 @@ class ProposalController extends Controller
                 'status_code' => 'ERROR'
             ];
             $this->response_code = 404;
-            return response()->json($this->response,$this->response_code);
         }
+        callback:
+        return response()->json($this->response,$this->response_code);
     }
 }
