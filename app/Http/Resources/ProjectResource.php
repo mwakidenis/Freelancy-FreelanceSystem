@@ -25,6 +25,7 @@ class ProjectResource extends JsonResource
                 'client_name' => $client->name,
                 'client_username' => $client->username,
                 'title' => $freelance->title,
+                'slug' => $freelance->slug,
                 'description' => $freelance->description,
                 'category' => $freelance->category,
                 'rate' => $freelance->rate,
@@ -37,7 +38,7 @@ class ProjectResource extends JsonResource
                 'freelancer_name' => $freelancer->name,
                 'freelancer_username' => $freelancer->username,
                 'description' => $this->description,    
-                'status' => Str::ucfirst($this->status),
+                'status' => Str::title($this->status),
                 'created_at' => $this->created_at,
                 'updated_at' => $this->updated_at,
             ]

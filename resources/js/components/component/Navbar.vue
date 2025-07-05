@@ -1,8 +1,10 @@
 <script setup>
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '../../authStore';
 import { MessageSquareMore } from 'lucide-vue-next';
 import Swal from 'sweetalert2';
 
+const router = useRouter();
 const authStore = useAuthStore();
 
 const logout = async () => {
@@ -26,6 +28,7 @@ const logout = async () => {
     })
 
     await authStore.logout();
+    router.push("/");
 
     Swal.fire({ //swal result
       text: "Logout successfully!",

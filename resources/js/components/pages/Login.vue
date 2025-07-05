@@ -32,7 +32,6 @@ const isRegisterWrong = ref(false);
 const isRegisterSuccess = ref(false);
 
 const isLoading = ref(false);
-const loadingColor = "#2b7fff";
 
 function emptyLoginInput() {
     loginEmail.value = null;
@@ -123,7 +122,7 @@ const register = async () => {
         <!-- Centered Content Box -->
         <div v-if="isLoading" class="fixed inset-0 flex justify-center items-center z-50">
             <div class="bg-white w-32 h-20 p-6 rounded-lg shadow-lg flex justify-center items-center">
-                <clip-loader :loading="loading" :color="loadingColor" :size="size"></clip-loader>
+                <clip-loader color="#2b7fff"></clip-loader>
             </div>
         </div>
 

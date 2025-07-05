@@ -174,7 +174,7 @@ class ProposalController extends Controller
             goto callback;
         }
         $type = Str::lower($request->input('type'));
-        if ($type == 'done' && $proposal->status != 'in progress'){
+        if ($type == 'complete' && $proposal->status != 'in progress'){
             $this->response = [
                 'msg' => 'Proposal is not accepted yet',
                 'status' => false,
@@ -188,8 +188,8 @@ class ProposalController extends Controller
             $proposal->status = $type == 'withdraw' ? 'withdrawn' : 'done';
             $proposal->save();
 
-            if ($type == 'done'){
-                $freelance = Proposal::where('freelance_id',$proposal->freelance_id)->first();
+            if ($type == 'complete'){
+                $freelance = Freelance::where('id',$proposal->freelance_id)->first();
                 $freelance->status = 'done';
                 $freelance->save();
             }

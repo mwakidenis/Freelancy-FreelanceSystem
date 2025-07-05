@@ -10,13 +10,12 @@ import Register from "../components/pages/Register.vue";
 import EmailVerify from "../components/pages/EmailVerify.vue";
 import EmailVerifySubmit from "../components/pages/EmailVerifySubmit.vue";
 // FOR FREELANCER MODULE
+import FreelanceView from "../components/pages/Freelance/View.vue"; //viewing all list of freelances
 import FreelanceViewProposals from "../components/pages/Freelance/ViewProposals.vue";
-import FreelanceView from "../components/pages/Freelance/View.vue";
 import FreelanceApply from "../components/pages/Freelance/Apply.vue";
 // FOR CLIENT MODULE
 import ClientViewProjects from "../components/pages/Client/ViewProjects.vue";
 import ClientViewSingleProject from "../components/pages/Client/ViewProjectSingle.vue";
-import ClientViewProposals from "../components/pages/Client/ViewProposals.vue";
 // FOR PROFILE MODULE 
 import ViewProfile from "../components/pages/Profile/ViewProfile.vue";
 import EditProfile from "../components/pages/Profile/EditProfile.vue";
@@ -30,7 +29,8 @@ const routes = [
         children: [
             { 
                 path:"", 
-                component: Home 
+                component: Home,
+                name: "home", 
             },
             {
                 path: '/:slug',
@@ -51,11 +51,6 @@ const routes = [
                 path: '/projects/:slug', 
                 component: ClientViewSingleProject,
                 name: "client-view-single-project" 
-            },
-            { 
-                path: '/:slug/proposals',
-                component: ClientViewProposals,
-                name: "client-view-proposals"
             },
             // PROFILE
             {

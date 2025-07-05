@@ -1,3 +1,4 @@
+import { useRouter } from "vue-router";
 import { defineStore } from "pinia";
 import api from "./api";
 
@@ -29,7 +30,6 @@ export const useAuthStore = defineStore("auth", {
           withCredentials: true,
         });
         this.user = response.data.data;
-        console.log("response from check auth method: ", response.data.data);
         return response.data.data;
       } catch (error) {
         this.user = null;
