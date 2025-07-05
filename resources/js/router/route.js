@@ -2,9 +2,6 @@ import { createRouter,createWebHistory } from "vue-router";
 import { useAuthStore } from "../authStore";
 import MainLayout from "../components/layout/MainLayout.vue";
 import Home from "../components/pages/Home.vue";
-import Example from "../components/pages/Example.vue";
-import Test from "../components/pages/Test.vue";
-import AddNews from "../components/pages/AddNews.vue";
 import Login from "../components/pages/Login.vue";
 import Register from "../components/pages/Register.vue";
 import EmailVerify from "../components/pages/EmailVerify.vue";
@@ -15,7 +12,6 @@ import FreelanceViewProposals from "../components/pages/Freelance/ViewProposals.
 import FreelanceApply from "../components/pages/Freelance/Apply.vue";
 // FOR CLIENT MODULE
 import ClientViewProjects from "../components/pages/Client/ViewProjects.vue";
-import ClientViewSingleProject from "../components/pages/Client/ViewProjectSingle.vue";
 // FOR PROFILE MODULE 
 import ViewProfile from "../components/pages/Profile/ViewProfile.vue";
 import EditProfile from "../components/pages/Profile/EditProfile.vue";
@@ -47,11 +43,6 @@ const routes = [
                 component: ClientViewProjects,
                 name: "client-view-projects"
             },
-            { //check if remove
-                path: '/projects/:slug', 
-                component: ClientViewSingleProject,
-                name: "client-view-single-project" 
-            },
             // PROFILE
             {
                 path: '/profile/:username',
@@ -69,13 +60,6 @@ const routes = [
                 component: FreelanceViewProposals,
                 name: "freelancer-view-proposals"
             },
-            //
-            // {
-            //     path: '/:username/message',
-            //     component: Message,
-            //     name: "message"
-            // }
-            // OTHER PATHS THAT WILL USE NAVBAR + FOOTER
         ]
     },
     {
@@ -87,19 +71,6 @@ const routes = [
         path: '/inbox/new',
         component: Message,
         name: "new-message"
-    },
-    {
-        path: '/example',
-        component: Example
-    }, 
-    {
-        path: '/test',
-        component: Test
-    },
-    {
-        path: '/test/create',
-        component: AddNews,
-        meta: { requiresAuth: true} // Protected route
     },
     {
         path: '/login',

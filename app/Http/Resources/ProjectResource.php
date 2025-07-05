@@ -29,7 +29,7 @@ class ProjectResource extends JsonResource
                 'description' => $freelance->description,
                 'category' => $freelance->category,
                 'rate' => $freelance->rate,
-                'status' => $freelance->status,
+                'status' => Str::title($freelance->status),
                 'created_at' => $freelance->created_at,
                 'updated_at' => $freelance->updated_at,
             ],

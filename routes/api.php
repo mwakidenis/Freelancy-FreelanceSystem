@@ -88,11 +88,16 @@ Route::post('/email/verify',['as'=>'api.verify.email','uses'=>'App\Http\Controll
 Route::group(['prefix'=>'freelances','as'=>'freelances.','namespace'=>'App\Http\Controllers'], function() {
     //'middleware'=>['api.auth','api.check_if_client']
     Route::group(['prefix'=>'client','as'=>'client'], function() {  
-        Route::get('/',['uses'=>'FreelanceController@getClientFreelanceProjects']); // VIEW ALL FREELANCES FOR THE CLIENT
+        Route::get('/',['uses'=>'FreelanceController@getClientFreelanceProjects']); // VIEW ALL OWN FREELANCES FOR THE CLIENT
         Route::post('/',['uses'=>'FreelanceController@store']);
         Route::put('/{slug?}',['uses'=>'FreelanceController@update']);
+
+        Route::get('/{slug?}/checkIfClientCanApprove',['uses'=>'FreelanceController@checkIfClientCanApprove']);
     });    
 
+
+    // test
+    
     Route::get('/',['uses'=>'FreelanceController@index']); //api/freelances - GET all freelances GENERAL
     // Route::
     Route::get('/{slug?}',['uses'=>'FreelanceController@show']); //api/freelances/{id} - GET single freelance > show 

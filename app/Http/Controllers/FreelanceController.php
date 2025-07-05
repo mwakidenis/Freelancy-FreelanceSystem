@@ -234,6 +234,50 @@ class FreelanceController extends Controller
         return response()->json($this->response,$this->response_code);
     }
 
+    public function checkIfClientCanApprove($slug = null){
+        $user = $this->getUser();
+        $freelance = Freelance::where('slug',$slug)->first();
+        if (!$freelance){
+            $this->response = [
+                'msg' => 'Freelance not found.',
+                'status' => false,
+                'status_code' => 'FREELANCE_NOT_FOUND'
+            ];
+            $this->response_code = 404;
+            goto callback;
+        }
+        
+        if ($user->role != 'client' || $user->id != $freelance->client_id) {
+            $this->response = [
+                'msg' => 'Unauthorized',
+                'status' => false,
+                'status_code' => 'UNAUTHORIZED'
+            ];
+            $this->response_code = 401;
+            goto callback;
+        }
+
+        if($freelance->status != 'active'){
+            $this->response = [
+                'msg' => 'Project already in progress or completed',
+                'status' => false,
+                'status_code' => 400       
+            ];
+            $this->response_code = 400;
+            goto callback;
+        }
+
+        $this->response = [
+            'msg' => 'Client authorized',
+            'status' => true,
+            'status_code' => 200
+        ];
+        $this->response_code = 200;
+
+        callback: 
+        return response()->json($this->response,$this->response_code);
+    }
+
     public function update(Request $request, $slug=null){
         $freelance = Freelance::where('slug',$slug)->first();
         $type = $request->input('type');
@@ -291,37 +335,6 @@ class FreelanceController extends Controller
         ] + FreelanceClientResource::collection($freelances)->response()->getData(true);
         $this->response_code = 200;
 
-        return response()->json($this->response,$this->response_code);
-    }
-
-    public function showAllProposals($slug=null){ //delete
-        $freelance = Freelance::where('slug',$slug)->first();
-        if (!$freelance){
-            $this->response = [
-                'msg' => 'Freelance not found',
-                'status' => false,
-                'status_code' => 'FREELANCE_NOT_FOUND'
-            ];
-            $this->response_code = 404;
-            goto callback;
-        }
-        $proposals = Proposal::where('freelance_id',$freelance->id)->paginate($this->per_page);
-        if ($proposals->isEmpty()){
-            $this->response = [
-                'msg' => 'No proposals yet.',
-                'status' => true,
-                'status_code' => 'NO_PROPOSALS'
-            ];
-            $this->response_code = 204;
-            goto callback;
-        }
-        $this->response = [
-            'msg' => 'Proposal list',
-            'status' => true,
-            'status_code' => 'PROPOSAL_LIST',
-        ] + ProposalResource::collection($proposals)->response()->getData(true);
-        $this->response_code = 200;
-        callback:
         return response()->json($this->response,$this->response_code);
     }
 }

@@ -41,6 +41,15 @@ class ProposalController extends Controller
             $this->response_code = 404;
             goto callback;
         }
+        if($freelance->status != 'active'){
+            $this->response = [
+                'msg' => 'You cannot send a proposal because the project is not active anymore',
+                'status' => false,
+                'status_code' => 'INACTIVE_PROJECT'
+            ];
+            $this->response_code = 400;
+            goto callback;
+        }
         $canApply = $this->freelancerCanApply($freelance->id);  
         if (!$canApply){
             $this->response = [

@@ -12,6 +12,9 @@ const route = useRoute();
 const slug = ref(route.params.slug);
 const authStore = useAuthStore();
 
+const isLoading = ref(true);
+const isFreelanceValid = ref(false);
+
 const freelanceDetails = ref('');
 const clientDetails = ref('');
 
@@ -30,6 +33,8 @@ const status = ['Pending','Accepted','Declined','Withdrawn'];
 const isFreelancer = ref(false);
 const canApply = ref(false);
 
+const clientCanProcess = ref(false);
+
 // modal
 const isModalOpen = ref(false);
 const actionToDo = ref();
@@ -43,6 +48,8 @@ const isError = ref(false);
 onMounted(async() => {
     await fetchFreelance();
     await fetchProposals();
+    await test();
+    isLoading.value = false;
 });
 
 const switchProposalType = (type) => {
@@ -170,6 +177,8 @@ async function fetchFreelance(){
             isFreelancer.value = true;
             checkIfUserCanApply();
         }
+
+        isFreelanceValid.value = true;
     } catch (error){
         console.error(error);
     }
@@ -253,114 +262,151 @@ async function processProposal(){
     });
 
 }
+
+async function test(){
+    try{
+        const response = await api.get(`/freelances/client/${slug.value}/checkIfClientCanApprove`,{withCredentials:true});
+        clientCanProcess.value = true;
+        console.log("response from test: ", response);
+    } catch (error){
+        clientCanProcess.value = false;
+        console.error(error);
+    }
+}
 </script>
 
 <template>
 
-    <div class="max-w-[1300px] w-full h-auto flex flex-col justify-center mx-auto my-12 px-4 md:border-b border-gray-300">
-        <div class="grid grid-cols-12">
-            <div class="md:col-span-10 col-span-12">
-                <div class="border-b border-gray-300 p-4">
-                    <p class="font-bold text-xl">{{ freelanceDetails?.title }}</p>
-                    <p class="text-sm text-gray-500 mt-2">{{new Date(freelanceDetails?.date_posted).toLocaleDateString("en-US", { year:'numeric',month:'long',day:'numeric' })}}</p>
-                </div>
-                <div class="border-b border-gray-300 p-4">
-                    <p>{{ freelanceDetails?.description }}</p>
-                </div>
-                <div class="border-b border-gray-300 p-4">
-                    <div class="flex items-center gap-2 text-sm text-gray-500">
-                        <Tag/> Php {{ freelanceDetails?.rate }}
-                    </div>
-                </div>
-                <div class="border-b border-gray-300 p-4">
-                    <p class="font-bold text-xl">Category</p>
-                    <div class="bg-blue-500 text-white text-center rounded-xl p-4 w-fit h-8 flex items-center mt-4">
-                        {{ freelanceDetails?.category }}
-                    </div>
-                </div>
-                <div class="flex flex-col gap-4 p-4">
-                    <p class="font-bold text-xl">Activity</p>
-                    <p class="text-sm text-gray-500">Total Proposals: {{ freelanceDetails?.number_of_total_proposals }}</p>
-                    <p class="text-sm text-gray-500">Accepted Proposals: {{ freelanceDetails?.number_of_accepted_proposals }}</p>
-                    <p class="text-sm text-gray-500">Pending Proposals: {{ freelanceDetails?.number_of_pending_proposals }}</p>
-                    <p class="text-sm text-gray-500">Declined Proposals: {{ freelanceDetails?.number_of_declined_proposals }}</p>
-                </div>
-            </div>
-            <div class="md:col-span-2 col-span-12 md:border-l border-gray-300 flex flex-col gap-4 ">
-                <div class="p-4">
-                    <router-link v-if="canApply" :to="{ name:'freelance-apply', params: { slug: freelanceDetails?.slug } }" 
-                        class="bg-blue-500 text-white text-center rounded-xl p-4 w-full h-12 flex items-center justify-center mt-4 cursor-pointer">
-                        Apply now
-                    </router-link>
-                </div>
-                <div class="font-bold text-lg md:border-none border-t border-gray-300">
-                    <p class="px-4 md:mt-0 mt-4">About the client</p>
-                </div>
-                <div class="px-4">
-                    <p class="text-sm font-bold text-gray-500">{{ clientDetails?.client_name }}</p>
-                </div>
-                <div class="px-4">
-                    <p class="text-sm font-bold text-gray-500">{{ clientDetails?.number_of_total_projects }} job/s posted</p>
-                </div>
-                <div class="px-4">
-                    <p class="text-xs text-gray-500">Member since {{new Date(clientDetails?.date_registered).toLocaleDateString("en-US", { year:'numeric',month:'long',day:'numeric' })}}</p>
-                </div> 
-            </div>
-        </div>
+
+    <div v-if="isLoading" class="flex items-center justify-center gap-4 mt-60">
+        <clip-loader color="#2b7fff"></clip-loader>
     </div>
 
-    <div class="px-4 mb-40">
-        <p class="text-2xl font-bold mb-12">Proposals</p>
-
-        <div class="shadow-lg">
-
-            <div class="flex items-center bg-gray-100 h-12 gap-8">
-                <div v-for="(proposalStatus,index) in status" class="h-full flex items-center gap-1 p-4 cursor-pointer" :key="index"
-                    :class="{
-                        'ms-4' : index === 0,
-                        'bg-white' : isTypeOfProposal == proposalStatus
-                    }"
-                    @click="switchProposalType(proposalStatus)">
-                       {{ proposalStatus }} <span class="text-blue-500">({{ formatProposalTypeLength(proposalStatus) }})</span>
+    <div v-else>
+        <div v-if="isFreelanceValid">
+            <div class="grid grid-cols-12">
+                <div class="md:col-span-10 col-span-12">
+                    <div class="border-b border-gray-300 p-4">
+                        <p class="font-bold text-xl">{{ freelanceDetails?.title }}</p>
+                        <p class="text-sm text-gray-500 mt-2">{{new Date(freelanceDetails?.date_posted).toLocaleDateString("en-US", { year:'numeric',month:'long',day:'numeric' })}}</p>
+                    </div>
+                    <div class="border-b border-gray-300 p-4">
+                        <p>{{ freelanceDetails?.description }}</p>
+                    </div>
+                    <div class="border-b border-gray-300 p-4">
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <Tag/> Php {{ freelanceDetails?.rate }}
+                        </div>
+                    </div>
+                    <div class="border-b border-gray-300 p-4">
+                        <p class="font-bold text-xl">Category</p>
+                        <div class="bg-blue-500 text-white text-center rounded-xl p-4 w-fit h-8 flex items-center mt-4">
+                            {{ freelanceDetails?.category }}
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-4 p-4">
+                        <p class="font-bold text-xl">Activity</p>
+                        <p class="text-sm text-gray-500">Total Proposals: {{ freelanceDetails?.number_of_total_proposals }}</p>
+                        <p class="text-sm text-gray-500">Accepted Proposals: {{ freelanceDetails?.number_of_accepted_proposals }}</p>
+                        <p class="text-sm text-gray-500">Pending Proposals: {{ freelanceDetails?.number_of_pending_proposals }}</p>
+                        <p class="text-sm text-gray-500">Declined Proposals: {{ freelanceDetails?.number_of_declined_proposals }}</p>
+                    </div>
                 </div>
-            </div>
-            
-            <div v-if="proposals.length > 0" v-for="(proposal,index) in proposals" :key="proposal?.id" 
-                class="border-b border-gray-300 p-12 min-h-60"
-                :class="{'flex items-center justify-center': isLoadingProposal}">
-                
-                <div v-if="!isLoadingProposal" class="flex gap-4">
-                    <div><CircleUserRound class="w-12 h-12"/></div>
-                    <div class="flex flex-col mt-2 gap-4">
-                        <router-link class="font-bold" :to="{name:'view-profile', params:{username:proposal?.freelancer_username}}">
-                            {{proposal?.freelancer_username}}
+                <div class="md:col-span-2 col-span-12 md:border-l border-gray-300 flex flex-col gap-4 ">
+                    <div class="p-4">
+                        <router-link v-if="canApply" :to="{ name:'freelance-apply', params: { slug: freelanceDetails?.slug } }" 
+                            class="bg-blue-500 text-white text-center rounded-xl p-4 w-full h-12 flex items-center justify-center mt-4 cursor-pointer">
+                            Apply now
                         </router-link>
-                        <div>
-                            {{ proposal?.description }}
-                        </div>
-                        <div v-if="proposal?.status == 'Pending'" class="flex text-gray-500 gap-4 text-sm ml-auto">
-                            <div class="cursor-pointer" @click="toggleModal('Open','Accept',index)">
-                                Accept Proposal
-                            </div>
-                            <div class="cursor-pointer" @click="toggleModal('Open','Decline',index)">
-                                Reject Proposal
-                            </div>
-                        </div>
                     </div>
-                    <div class="flex flex-col ml-auto text-sm text-gray-300">
-                        <div>{{moment(proposal?.created_at).format('MMMM DD, YYYY')}}</div>
+                    <div class="font-bold text-lg md:border-none border-t border-gray-300">
+                        <p class="px-4 md:mt-0 mt-4">Project Status</p>
+                    </div> 
+                    <div class="px-4">
+                        <span class="text-white py-1 px-10 rounded-full"
+                            :class="{
+                            'bg-blue-500' : freelanceDetails?.status == 'Active',
+                            'bg-yellow-500' : freelanceDetails?.status == 'In Progress',
+                            'bg-gray-500' : freelanceDetails?.status == 'Inactive',
+                            'bg-green-500' : freelanceDetails?.status == 'Done'
+                        }">
+                            {{ freelanceDetails?.status }}
+                        </span>
+                    </div>
+                    <div class="font-bold text-lg md:border-none border-t border-gray-300">
+                        <p class="px-4 md:mt-0 mt-4">About the client</p>
+                    </div>
+                    <div class="px-4">
+                        <p class="text-sm font-bold text-gray-500">{{ clientDetails?.client_name }}</p>
+                    </div>
+                    <div class="px-4">
+                        <p class="text-sm font-bold text-gray-500">{{ clientDetails?.number_of_total_projects }} job/s posted</p>
+                    </div>
+                    <div class="px-4">
+                        <p class="text-xs text-gray-500">Member since {{new Date(clientDetails?.date_registered).toLocaleDateString("en-US", { year:'numeric',month:'long',day:'numeric' })}}</p>
                     </div>
                 </div>
-                <div v-else>
-                    <clip-loader color="#2b7fff"></clip-loader>
-                </div>
-
-
-            </div> 
-
-            <div v-else class="min-h-60 flex items-center justify-center">
-                <p class="text-gray-300">No {{ isTypeOfProposal }} proposals yet.</p>
             </div>
+
+            <div class="px-4 mb-40">
+                <p class="text-2xl font-bold mb-12">Proposals</p>
+
+                <div class="shadow-lg">
+
+                    <div class="flex flex-wrap items-center md:justify-start justify-center bg-gray-100 min-h-12 max-h-auto gap-8">
+                        <div v-for="(proposalStatus,index) in status" class="h-full flex items-center gap-1 p-4 cursor-pointer" :key="index"
+                            :class="{
+                                'ms-4' : index === 0,
+                                'bg-white' : isTypeOfProposal == proposalStatus
+                            }"
+                            @click="switchProposalType(proposalStatus)">
+                                {{ proposalStatus }} <span class="text-blue-500">({{ formatProposalTypeLength(proposalStatus) }})</span>
+                        </div>
+                    </div>
+                    
+                    <div v-if="proposals.length > 0" v-for="(proposal,index) in proposals" :key="proposal?.id" 
+                        class="border-b border-gray-300 p-12 min-h-60"
+                        :class="{'flex items-center justify-center': isLoadingProposal}">
+                        
+                        <div v-if="!isLoadingProposal" class="flex gap-4">
+                            <div><CircleUserRound class="w-12 h-12"/></div>
+                            <div class="flex flex-col mt-2 gap-4">
+                                <router-link class="font-bold" :to="{name:'view-profile', params:{username:proposal?.freelancer_username}}">
+                                    {{proposal?.freelancer_username}}
+                                </router-link>
+                                <div>
+                                    {{ proposal?.description }}
+                                </div>
+                                <div v-if="clientCanProcess && proposal?.status == 'Pending'" class="flex text-gray-500 gap-4 text-sm ml-auto">
+                                    <div class="cursor-pointer" @click="toggleModal('Open','Accept',index)">
+                                        Accept Proposal
+                                    </div>
+                                    <div class="cursor-pointer" @click="toggleModal('Open','Decline',index)">
+                                        Reject Proposal
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col ml-auto text-sm text-gray-300">
+                                <div>{{moment(proposal?.created_at).format('MMMM DD, YYYY')}}</div>
+                            </div>
+                        </div>
+                        <div v-else>
+                            <clip-loader color="#2b7fff"></clip-loader>
+                        </div>
+
+
+                    </div> 
+
+                    <div v-else class="min-h-60 flex items-center justify-center">
+                        <p class="text-gray-300">No {{ isTypeOfProposal }} proposals yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div v-else class="flex flex-col items-center justify-center gap-4 mt-60">
+            <p class="text-4xl font-bold">Freelance project does not exist.</p>
+            <p class="text-gray-500">Click here to go back to <router-link class="text-blue-500" :to="{name:'home'}">Home</router-link> </p>
         </div>
     </div>
 
