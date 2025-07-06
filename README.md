@@ -1,66 +1,79 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Freelancy - Freelance Platform  
+A full-stack freelance management system built with **Laravel 10** (Backend) and **Vue 3** (Frontend) styled with **Tailwind CSS**.
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 🚀 Project Overview
 
-## About Laravel
+Freelancy is a web application designed to connect **clients** and **freelancers** in a simple, intuitive platform where projects can be created, proposals submitted, and work managed seamlessly.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### 👥 User Types
+- **Client:** Users who post projects and hire freelancers.
+- **Freelancer:** Users who apply to projects and deliver work.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 📝 How It Works
 
-## Learning Laravel
+1. **Clients** create projects, specifying details like category, rate, and description.
+2. **Freelancers** browse projects and submit proposals.
+3. **Clients** can approve or reject proposals.
+4. **Freelancers** can withdraw their proposal before it gets approved or rejected.
+5. Once a proposal is **approved**, the **freelancer** can mark the project as **done**.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## 🔑 Key Features
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 🔗 Core Functionalities
+- **Project Management:** Clients can create, view, and manage project listings.
+- **Proposal System:** Freelancers can submit, withdraw, and track proposals.
+- **Approval Workflow:** Clients can accept or reject proposals; freelancers can mark projects as completed.
 
-## Laravel Sponsors
+### 💬 Real-Time Messaging
+- Private messaging between users, powered by **Pusher** and **Laravel Echo** for real-time communication.
+- Users can message others, including themselves.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 👤 User Profiles
+- Fully customizable profiles with editable:
+  - Brief description
+  - Skills
+  - Work experience
+  - Educational attainment
 
-### Premium Partners
+### 🔍 Search & Filtering
+- Live search, filtering, and pagination with **debounced search** using **Lodash**.
+- Route-based query parameters ensure shareable and reproducible search results via URL.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### 🔐 Authentication & Authorization
+- Registration, login, logout, and **email verification** (SMTP).
+- Stateless authentication using **JWT tokens**.
+- Role-based **authorization**.
 
-## Contributing
+### ⚙️ Backend & Testing
+- RESTful **JSON API** built with **Laravel 10**.
+- Feature testing with **PHPUnit** for key functionalities.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 🌐 Frontend Enhancements
+- **SweetAlert2** for polished modal dialogs (confirmations, alerts, loading).
+- **Moment.js** for consistent and human-readable date/time formatting.
+- **Vue Router** for smooth client-side navigation.
+- **Axios** for efficient communication with the backend.
+- **Pinia** for reliable and reactive global state management.
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 🛠 Tech Stack
 
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Technology | Purpose |
+|------------|---------|
+| **Laravel 10** | Backend API & Business Logic |
+| **Vue 3** | Frontend Interface |
+| **Tailwind CSS** | Styling & Layout |
+| **Pinia** | Frontend State Management |
+| **JWT** | Authentication |
+| **Pusher & Laravel Echo** | Real-Time Messaging |
+| **PHPUnit** | Automated Testing |
+| **Axios** | Frontend HTTP Requests |
+| **SweetAlert2** | Modal Dialogs & Notifications |
+| **Moment.js** | Date & Time Formatting |
+| **Vue Router** | SPA Routing |
+| **Lodash (Debounce)** | Optimized Search Input Handling |
