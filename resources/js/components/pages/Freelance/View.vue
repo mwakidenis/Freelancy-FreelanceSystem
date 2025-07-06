@@ -48,7 +48,9 @@ const isError = ref(false);
 onMounted(async() => {
     await fetchFreelance();
     await fetchProposals();
-    await test();
+    if (authStore.getUserRole == 'client'){
+        await fetchClientCanApprove();
+    }
     isLoading.value = false;
 });
 
@@ -263,7 +265,7 @@ async function processProposal(){
 
 }
 
-async function test(){
+async function fetchClientCanApprove(){
     try{
         const response = await api.get(`/freelances/client/${slug.value}/checkIfClientCanApprove`,{withCredentials:true});
         clientCanProcess.value = true;
