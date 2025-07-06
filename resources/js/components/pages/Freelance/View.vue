@@ -269,7 +269,6 @@ async function fetchClientCanApprove(){
     try{
         const response = await api.get(`/freelances/client/${slug.value}/checkIfClientCanApprove`,{withCredentials:true});
         clientCanProcess.value = true;
-        console.log("response from test: ", response);
     } catch (error){
         clientCanProcess.value = false;
         console.error(error);
