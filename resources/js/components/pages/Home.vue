@@ -114,7 +114,7 @@ async function fetchFreelances() {
         <div v-else>
             <div class="flex justify-between items-center">
                 <div class="my-6">
-                    <select class="bg-gray-100 w-full h-12 px-8 rounded-lg cursor-pointer" @change="sortParams = $event.target.value">
+                    <select class="bg-gray-100 w-full h-8 px-2 rounded-lg cursor-pointer" @change="sortParams = $event.target.value">
                         <option value="1">Latest</option> <!-- LATEST ORDER BY DESC > 1 --> 
                         <option value="2">Oldest</option> <!-- OLDEST ORDER BY ASC > 2 -->
                         <option value="3">Low to High (Rate)</option> <!-- CHEAPEST ORDER BY ASC 3 -->
@@ -124,7 +124,7 @@ async function fetchFreelances() {
                 <div class="flex my-6 gap-2">
                     <div v-for="(n, index) in numberOfPage" :key="index"
                         :class="{
-                            'h-12 w-12 bg-gray-100 flex items-center justify-center cursor-pointer': true,
+                            'h-8 w-8 bg-gray-100 flex items-center justify-center cursor-pointer': true,
                             'bg-gray-300': parseInt(currentPage) === index + 1
                         }"
                         @click="switchPage(index + 1, queryParams)">
@@ -148,9 +148,9 @@ async function fetchFreelances() {
                 
                 <p class="text-xs text-gray-500">Rate: Php {{ freelance?.freelance_project_details?.rate }}</p>
                 <p>{{ freelance?.description }}</p>
-                <div class="bg-blue-500 text-white text-center rounded-xl p-4 w-fit h-8 flex items-center">
+                <span class="text-white py-1 px-10 rounded-full bg-blue-500 text-xs w-fit">
                     {{ freelance?.freelance_project_details?.category }}
-                </div>
+                </span>
                 <p class="text-xs text-gray-500">Number of proposals: {{ freelance?.freelance_project_details?.number_of_total_proposals }}</p>
             
         </router-link>  
@@ -158,7 +158,7 @@ async function fetchFreelances() {
         <div class="flex my-12 float-right gap-2">
             <div v-for="(n, index) in numberOfPage" :key="index"
                 :class="{
-                    'h-12 w-12 bg-gray-100 flex items-center justify-center cursor-pointer': true,
+                    'h-8 w-8 bg-gray-100 flex items-center justify-center cursor-pointer': true,
                     'bg-gray-300': parseInt(currentPage) === index + 1
                 }"
                 @click="switchPage(index + 1, queryParams)">

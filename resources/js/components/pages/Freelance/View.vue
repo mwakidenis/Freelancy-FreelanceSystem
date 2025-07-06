@@ -301,7 +301,7 @@ async function fetchClientCanApprove(){
                     </div>
                     <div class="border-b border-gray-300 p-4">
                         <p class="font-bold text-xl">Category</p> <br/>
-                        <span class="text-white py-1 px-10 rounded-full bg-blue-500">
+                        <span class="text-white py-1 px-10 rounded-full bg-blue-500 text-xs">
                             {{ freelanceDetails?.category }}
                         </span>
                     </div>
