@@ -338,7 +338,7 @@ async function fetchClientCanApprove(){
                         <p class="px-4 md:mt-0 mt-4">About the client</p>
                     </div>
                     <div class="px-4">
-                        <p class="text-sm font-bold text-gray-500">{{ clientDetails?.client_name }}</p>
+                        <router-link :to="{name:'view-profile', params:{username:clientDetails?.client_username}}" class="text-lg font-bold text-gray-500">{{ clientDetails?.client_name }}</router-link>
                     </div>
                     <div class="px-4">
                         <p class="text-sm font-bold text-gray-500">{{ clientDetails?.number_of_total_projects }} job/s posted</p>

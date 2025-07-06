@@ -1,62 +1,62 @@
 <script setup>
-import { ref,watchEffect } from 'vue';
+import { ref,onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import api from '../../../api';
 import { useAuthStore } from '../../../authStore';
 import Button from '../../component/Button.vue';
-import { CircleUserRound, MessageCircleMore } from 'lucide-vue-next';
+import { CircleUserRound,Send } from 'lucide-vue-next';
+import { ClipLoader } from 'vue-spinner/dist/vue-spinner.min.js';
 
 const route = useRoute();
 const authStore = useAuthStore();
-const username = ref('');
+const username = ref(route.params.username);
 const user = ref('');
 const isError = ref(false);
+const isLoading = ref(true);
 
-watchEffect(() => {
-    if (route.params.username){
-        username.value = route.params.username;
-        fetchProfile();
-    }
+onMounted(async() => {
+    await fetchProfile();
+    isLoading.value = false;
 });
 
 async function fetchProfile(){
     try {
         const response = await api.get(`/profile/${username.value}`);
         user.value = response.data.data;
-        if (response.status === 404) {
-            isError.value = true;
-        }
     } catch (error){
-        if (error.response && error.response.status === 404) {
-            isError.value = true;
-        }
+        isError.value = true;
+        console.error(error);
     }
 }
 </script>
 
 <template>
-    <div v-if="!isError">
+    <div v-if="isLoading" class="flex items-center justify-center gap-4 mt-60">
+        <clip-loader color="#2b7fff"></clip-loader>
+    </div>
+
+    <div v-else-if="!isError">
         <div class="w-full h-full flex flex-col justify-center mx-auto border-1 border-gray-300 my-12">
             <div class="grid grid-cols-12">
                 <div class="md:col-span-2 col-span-12 md:border-r border-gray-300 flex flex-col gap-3 px-4 py-8 text-center">
                     <div class="">
-                        <CircleUserRound class="w-24 h-24 mx-auto"/>
+                        <CircleUserRound class="text-blue-500 w-24 h-24 mx-auto"/>
                     </div>
                     <div v-if="authStore.isAuthenticated" class="mx-4">
                         <router-link :to="{name:'inbox', params: {username:user?.username}}">
                             <button 
-                                class="bg-blue-500 cursor-pointer text-white w-40 h-8 rounded-xl hover:opacity-80
-                                    flex items-center justify-center gap-1">
-                                <span><MessageCircleMore class="h-4 w-4"/></span> Message
+                                class="bg-green-500 cursor-pointer text-white w-auto h-8 rounded-xl hover:opacity-80
+                                    flex items-center justify-center gap-2 mx-auto px-4 text-sm">
+                                <span><Send class="h-3 w-3 mt-1"/></span> Message
                             </button>
                         </router-link>
                     </div>
                     <div class="font-bold">
-                        <p class="text-xl">{{user?.name}}</p>
-                        <p class="text-sm text-gray-500">@{{user?.username}}</p>
+                        <p class="text-lg">{{user?.name}}</p>
+                        <p class="text-xs text-gray-500">@{{user?.username}}</p>
                     </div>
                     <div class="">
-                        <p class="text-sm font-bold text-gray-500">
+                        <p class="text-xs font-bold text-gray-500">
                             <div v-if="user?.user_type == 'freelancer'">
                                 Number of proposals: {{ user?.number_of_freelances }}
                             </div>
@@ -104,7 +104,9 @@ async function fetchProfile(){
         </div>
         
     </div>
-    <div v-else>
-        Not found
+
+    <div v-else class="flex flex-col items-center justify-center gap-4 mt-60">
+        <p class="text-4xl font-bold">Profile does not exist.</p>
+        <p class="text-gray-500">Click here to go back to <router-link class="text-blue-500" :to="{name:'home'}">Home</router-link> </p>
     </div>
 </template>
