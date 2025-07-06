@@ -30,7 +30,7 @@ const alphabeticalParams = ref();
 
 //page
 const totalItems = ref();
-const itemsPerPage = 1;
+const itemsPerPage = 10;
 const numberOfPage = ref();
 const currentPage = ref(parseInt(route.query.page) || 1);
 const startCurrentPage = ref(0);
@@ -331,9 +331,9 @@ async function updateProposalStatus(index,type){
                 <span class="font-semibold text-gray-900 dark:text-white">{{ totalItems }}</span>
             </span>
             <ul v-if="proposalsPaginated.length > 0" class="inline-flex -space-x-px rtl:space-x-reverse text-sm h-8">
-                <li v-for="(page,index) in numberOfPage" :key="index">
-                    <a @click="switchPage(page)" :aria-current="parseInt(currentPage) === page ? 'page' : null" 
-                        class="flex items-center justify-center px-3 h-8 text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white">
+                <li v-for="(page,index) in numberOfPage" :key="index" class="cursor-pointer">
+                    <a @click="switchPage(page)" :class="{'bg-gray-300' : parseInt(currentPage) === page}"
+                        class="flex items-center justify-center px-3 h-8 border border-gray-300 bg-blue-50 hover:opacity-70">
                         {{page}}
                     </a>
                 </li>
