@@ -423,8 +423,8 @@ async function updateStatusFreelance() {
             </button>
         </div>
         
-        <div class="relative overflow-x-auto shadow-md sm:rounded-lg min-h-screen">
-            <table class="w-full min-h-96 text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+        <div class="relative overflow-x-auto shadow-md sm:rounded-lg h-auto">
+            <table class="w-full h-auto text-sm text-left rtl:text-right text-gray-500">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
                         <th scope="col" class="px-6 py-3">
@@ -453,12 +453,12 @@ async function updateStatusFreelance() {
                 </thead>
                 <tbody>
                     <tr v-if="freelancesPaginated.length > 0" v-for="(freelance,index) in freelancesPaginated" :key="freelance?.id"
-                        class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                        class="text-xs bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
+                        <th scope="row" class="px-6 py-4">
                             {{new Date(freelance?.date_posted).toLocaleDateString("en-US", { year:'numeric',month:'long',day:'numeric' })}}
                         </th>
                         <td class="px-6 py-4">
-                            {{ freelance?.title }}
+                            <p class="font-bold">{{ freelance?.title }}</p>
                         </td>
                         <td class="px-6 py-4">
                             <span class="text-white py-1 px-10 rounded-full"
@@ -519,17 +519,6 @@ async function updateStatusFreelance() {
                     </li>
                 </ul>
             </nav>
-        </div>
-
-        <div class="flex my-12 float-right gap-2">
-            <div v-for="(page,index) in numberOfPage" :key="index"
-                :class="{
-                    'h-12 w-12 bg-gray-100 flex items-center justify-center cursor-pointer': true,
-                    'bg-gray-300': parseInt(currentPage) === index + 1
-                }"
-                @click="switchPage(page)">
-                {{ page }}
-            </div>
         </div>
 
         <!-- ADD AND EDIT MODAL -->
