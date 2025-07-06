@@ -316,7 +316,7 @@ async function fetchClientCanApprove(){
                 <div class="md:col-span-2 col-span-12 md:border-l border-gray-300 flex flex-col gap-4 ">
                     <div class="p-4">
                         <router-link v-if="canApply" :to="{ name:'freelance-apply', params: { slug: freelanceDetails?.slug } }" 
-                            class="bg-blue-500 text-white text-center rounded-xl p-4 w-full h-12 flex items-center justify-center mt-4 cursor-pointer">
+                            class="bg-green-500 text-white text-center rounded-xl p-4 w-full h-12 flex items-center justify-center mt-4 cursor-pointer">
                             Apply now
                         </router-link>
                     </div>
@@ -370,7 +370,7 @@ async function fetchClientCanApprove(){
                         :class="{'flex items-center justify-center': isLoadingProposal}">
                         
                         <div v-if="!isLoadingProposal" class="flex gap-4">
-                            <div><CircleUserRound class="w-12 h-12"/></div>
+                            <div><CircleUserRound class="w-12 h-12 text-blue-500"/></div>
                             <div class="flex flex-col mt-2 gap-4">
                                 <router-link class="font-bold" :to="{name:'view-profile', params:{username:proposal?.freelancer_username}}">
                                     {{proposal?.freelancer_username}}
