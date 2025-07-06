@@ -288,29 +288,29 @@ async function fetchClientCanApprove(){
             <div class="grid grid-cols-12">
                 <div class="md:col-span-10 col-span-12">
                     <div class="border-b border-gray-300 p-4">
-                        <p class="font-bold text-xl">{{ freelanceDetails?.title }}</p>
-                        <p class="text-sm text-gray-500 mt-2">{{new Date(freelanceDetails?.date_posted).toLocaleDateString("en-US", { year:'numeric',month:'long',day:'numeric' })}}</p>
+                        <p class="font-bold text-2xl">{{ freelanceDetails?.title }}</p>
+                        <p class="text-xs text-gray-500 mt-2">{{new Date(freelanceDetails?.date_posted).toLocaleDateString("en-US", { year:'numeric',month:'long',day:'numeric' })}}</p>
                     </div>
                     <div class="border-b border-gray-300 p-4">
                         <p>{{ freelanceDetails?.description }}</p>
                     </div>
                     <div class="border-b border-gray-300 p-4">
-                        <div class="flex items-center gap-2 text-sm text-gray-500">
-                            <Tag/> Php {{ freelanceDetails?.rate }}
+                        <div class="flex items-center gap-2 text-sm text-gray-500 font-bold">
+                            <Tag class="w-4 h-4"/> Php {{ freelanceDetails?.rate }}
                         </div>
                     </div>
                     <div class="border-b border-gray-300 p-4">
-                        <p class="font-bold text-xl">Category</p>
-                        <div class="bg-blue-500 text-white text-center rounded-xl p-4 w-fit h-8 flex items-center mt-4">
+                        <p class="font-bold text-xl">Category</p> <br/>
+                        <span class="text-white py-1 px-10 rounded-full bg-blue-500">
                             {{ freelanceDetails?.category }}
-                        </div>
+                        </span>
                     </div>
-                    <div class="flex flex-col gap-4 p-4">
-                        <p class="font-bold text-xl">Activity</p>
-                        <p class="text-sm text-gray-500">Total Proposals: {{ freelanceDetails?.number_of_total_proposals }}</p>
-                        <p class="text-sm text-gray-500">Accepted Proposals: {{ freelanceDetails?.number_of_accepted_proposals }}</p>
-                        <p class="text-sm text-gray-500">Pending Proposals: {{ freelanceDetails?.number_of_pending_proposals }}</p>
-                        <p class="text-sm text-gray-500">Declined Proposals: {{ freelanceDetails?.number_of_declined_proposals }}</p>
+                    <div class="flex flex-col gap-2 p-4">
+                        <p class="font-bold text-xl mb-2">Activity</p>
+                        <p class="text-xs text-gray-500 font-bold">Total Proposals: <span class="font-normal">{{ freelanceDetails?.number_of_total_proposals }}</span></p>
+                        <p class="text-xs text-gray-500 font-bold">Accepted Proposals: <span class="font-normal">{{ freelanceDetails?.number_of_accepted_proposals }}</span></p>
+                        <p class="text-xs text-gray-500 font-bold">Pending Proposals: <span class="font-normal">{{ freelanceDetails?.number_of_pending_proposals }}</span></p>
+                        <p class="text-xs text-gray-500 font-bold">Declined Proposals: <span class="font-normal">{{ freelanceDetails?.number_of_declined_proposals }}</span></p>
                     </div>
                 </div>
                 <div class="md:col-span-2 col-span-12 md:border-l border-gray-300 flex flex-col gap-4 ">
@@ -350,7 +350,7 @@ async function fetchClientCanApprove(){
             </div>
 
             <div class="px-4 mb-40">
-                <p class="text-2xl font-bold mb-12">Proposals</p>
+                <p class="text-2xl font-bold my-12">Proposals</p>
 
                 <div class="shadow-lg">
 
@@ -376,7 +376,9 @@ async function fetchClientCanApprove(){
                                     {{proposal?.freelancer_username}}
                                 </router-link>
                                 <div>
-                                    {{ proposal?.description }}
+                                    <p class="text-sm">
+                                        {{ proposal?.description }}
+                                    </p>
                                 </div>
                                 <div v-if="clientCanProcess && proposal?.status == 'Pending'" class="flex text-gray-500 gap-4 text-sm ml-auto">
                                     <div class="cursor-pointer" @click="toggleModal('Open','Accept',index)">
@@ -387,7 +389,7 @@ async function fetchClientCanApprove(){
                                     </div>
                                 </div>
                             </div>
-                            <div class="flex flex-col ml-auto text-sm text-gray-300">
+                            <div class="flex flex-col ml-auto text-xs text-gray-300">
                                 <div>{{moment(proposal?.created_at).format('MMMM DD, YYYY')}}</div>
                             </div>
                         </div>
