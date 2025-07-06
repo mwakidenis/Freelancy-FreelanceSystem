@@ -123,28 +123,6 @@ class ProposalController extends Controller
         return response()->json($this->response,$this->response_code);
     }
 
-    public function show($id=null){ //where did i use this 
-        $proposal = Proposal::find($id);
-        if (!$proposal){
-            $this->response = [
-                'msg' => 'Proposal not found',
-                'status' => false,
-                'status_code' => 'NOT_FOUND'
-            ];
-            $this->response_code = 404;
-            goto callback;
-        }
-        $this->response = [
-            'msg' => 'View Proposal',
-            'status'=> true,
-            'status_code' => 'VIEW_PROPOSAL',
-            'data' => new ProjectResource($proposal)
-        ];
-        $this->response_code = 200;
-        callback:
-        return response()->json($this->response,$this->response_code);
-    }
-
     public function getFreelancerProposals(Request $request)
     {
         $user = $this->getUser();
