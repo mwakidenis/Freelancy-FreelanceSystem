@@ -162,8 +162,8 @@ const register = async () => {
                                             v-model="loginPassword" 
                                             id="loginPassword"
                                         />
-                                        <EyeOff v-if="isLoginPasswordToggled" class="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500" @click="isLoginPasswordToggled = !isLoginPasswordToggled" />
-                                        <Eye v-else class="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500" @click="isLoginPasswordToggled = !isLoginPasswordToggled"/>
+                                        <EyeOff v-if="isLoginPasswordToggled" class="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500 w-5 h-5" @click="isLoginPasswordToggled = !isLoginPasswordToggled" />
+                                        <Eye v-else class="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500 w-5 h-5" @click="isLoginPasswordToggled = !isLoginPasswordToggled"/>
                                     </div>
                                 </div>
                             </div>
@@ -235,8 +235,8 @@ const register = async () => {
                                             :class="isConfirmPasswordWrong || isRegisterWrong ? 'border border-red-500' : ''"
                                             :type="isRegisterPasswordToggled ? 'text' : 'password'" 
                                             v-model="registerPassword"/>
-                                        <EyeOff v-if="isRegisterPasswordToggled" class="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500" @click="isRegisterPasswordToggled = !isRegisterPasswordToggled" />
-                                        <Eye v-else class="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500" @click="isRegisterPasswordToggled = !isRegisterPasswordToggled"/>
+                                        <EyeOff v-if="isRegisterPasswordToggled" class="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500 w-5 h-5" @click="isRegisterPasswordToggled = !isRegisterPasswordToggled" />
+                                        <Eye v-else class="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500 w-5 h-5" @click="isRegisterPasswordToggled = !isRegisterPasswordToggled"/>
                                     </div>
                                 </div>
 
@@ -252,8 +252,8 @@ const register = async () => {
                                             :class="isConfirmPasswordWrong || isRegisterWrong? 'border border-red-500' : ''"
                                             :type="isRegisterConfirmPasswordToggled ? 'text' : 'password'" 
                                             v-model="registerConfirmPassword"/>
-                                        <EyeOff v-if="isRegisterConfirmPasswordToggled" class="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500" @click="isRegisterConfirmPasswordToggled = !isRegisterConfirmPasswordToggled" />
-                                        <Eye v-else class="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500" @click="isRegisterConfirmPasswordToggled = !isRegisterConfirmPasswordToggled"/>
+                                        <EyeOff v-if="isRegisterConfirmPasswordToggled" class="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500 w-5 h-5" @click="isRegisterConfirmPasswordToggled = !isRegisterConfirmPasswordToggled" />
+                                        <Eye v-else class="absolute top-1/2 right-3 transform -translate-y-1/2 cursor-pointer text-gray-500 w-5 h-5" @click="isRegisterConfirmPasswordToggled = !isRegisterConfirmPasswordToggled"/>
                                     </div>
                                 </div>
                             </div>
