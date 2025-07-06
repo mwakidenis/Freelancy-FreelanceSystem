@@ -105,6 +105,22 @@ const switchPage = (page) => {
     }
 }
 
+const clearFilter = () => {
+    currentPage.value = 1;
+    queryParams.value = undefined;
+    dateParams.value = '';
+    alphabeticalParams.value = '';
+
+    switchPage(1);
+
+    router.replace({
+        query:{
+            page: undefined,
+            q: undefined,
+        }
+    })
+}
+
 const toggleDropdown = (id) => {
     proposalId.value = proposalId.value === id ? null : id;
 };
@@ -230,17 +246,17 @@ async function updateProposalStatus(index,type){
                 </div>
             </div>
             <div class="flex-none">
-                <button class="bg-green-500 cursor-pointer text-white h-12 rounded-xl 
+                <button @click="clearFilter()" class="text-xs bg-red-500 cursor-pointer text-white h-12 rounded-xl 
                     hover:opacity-80 ml-auto flex items-center justify-center gap-2 my-4 p-4">
-                    <Eraser/>
+                    <Eraser class="h-4 w-4"/>
                     Clear filter
                 </button>
             </div>
         </div>
         
         <div class="relative overflow-x-auto shadow-md sm:rounded-lg min-h-96 max-h-auto">
-            <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            <table class="w-full text-sm text-left rtl:text-right text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700">
                     <tr>
                         <th scope="col" class="px-6 py-3">
                             <div class="flex items-center gap-1 ">
@@ -268,12 +284,12 @@ async function updateProposalStatus(index,type){
                 </thead>
                 <tbody>
                     <tr v-if="proposalsPaginated.length > 0" v-for="(proposal,index) in proposalsPaginated" :key="proposal?.proposal_details.id"
-                        class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
-                        <td scope="row" class="p-6 font-medium text-gray-900 whitespace-nowrap dark:text-white w-2/12">
+                        class="text-xs bg-white border-b border-gray-200 hover:bg-gray-50">
+                        <td scope="row" class="px-6 py-4 w-2/12">
                             {{ moment(proposal?.proposal_details.created_at).format('MMM DD, YYYY') }}
                         </td>
                         <td class="p-6 w-4/12">
-                            {{ proposal?.freelance_project_details.title }}
+                            <p class="font-bold">{{ proposal?.freelance_project_details.title }}</p>
                         </td>
                         <td class="p-6 w-4/12">
                             <span class="text-white py-1 px-10 rounded-full"
@@ -307,10 +323,10 @@ async function updateProposalStatus(index,type){
                                         View Project
                                     </li>
                                 </router-link>
-                                <li v-if="proposal?.proposal_details.status == 'In Progress'" @click="confirmAndProcess(index,'Complete')" class="p-2 hover:bg-gray-100 cursor-pointer text-blue-600">
+                                <li v-if="proposal?.proposal_details.status == 'In Progress'" @click="confirmAndProcess(index,'Complete')" class="p-2 hover:bg-gray-100 cursor-pointer text-green-500">
                                     Complete Project
                                 </li>
-                                <li v-if="proposal?.proposal_details.status == 'Pending'" @click="confirmAndProcess(index,'Withdraw')" class="p-2 hover:bg-gray-100 cursor-pointer text-blue-600">
+                                <li v-if="proposal?.proposal_details.status == 'Pending'" @click="confirmAndProcess(index,'Withdraw')" class="p-2 hover:bg-gray-100 cursor-pointer text-gray-500">
                                     Withdraw Proposal
                                 </li>
                             </ul>
@@ -325,7 +341,7 @@ async function updateProposalStatus(index,type){
         </div>
 
         <nav class="flex items-center flex-column flex-wrap md:flex-row justify-between pt-4 p-5" aria-label="Table navigation">
-            <span class="text-sm font-normal text-gray-500 dark:text-gray-400 mb-4 md:mb-0 block w-full md:inline md:w-auto">
+            <span class="text-sm font-normal text-gray-500 mb-4 md:mb-0 block w-full md:inline md:w-auto">
                 Showing <span class="font-semibold text-gray-900 dark:text-white">{{startCurrentPage+1}}-{{endCurrentPage}}</span>
                 of 
                 <span class="font-semibold text-gray-900 dark:text-white">{{ totalItems }}</span>
