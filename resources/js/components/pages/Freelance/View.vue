@@ -48,7 +48,7 @@ const isError = ref(false);
 onMounted(async() => {
     await fetchFreelance();
     await fetchProposals();
-    if (authStore.getUserRole == 'client'){
+    if (authStore.getUser.user_type == 'client'){
         await fetchClientCanApprove();
     }
     isLoading.value = false;
@@ -175,7 +175,7 @@ async function fetchFreelance(){
         freelanceDetails.value = response.data.data.freelance_project_details;
         clientDetails.value = response.data.data.client_details;
 
-        if (authStore.isAuthenticated && authStore.getUserRole == 'freelancer'){
+        if (authStore.isAuthenticated && authStore.getUser.user_type == 'freelancer'){
             isFreelancer.value = true;
             checkIfUserCanApply();
         }

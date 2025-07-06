@@ -25,7 +25,7 @@ const savingMessage = ref('');
 const isError = ref(false);
 
 onMounted(async () => {
-    if (authStore.isAuthenticated && authStore.getUserRole == 'freelancer'){
+    if (authStore.isAuthenticated && authStore.getUser.user_type == 'freelancer'){
         await checkIfUserCanApply();
         if (canApply) await fetchFreelance();
     }
@@ -113,7 +113,7 @@ async function postApplyFreelance(){
         <clip-loader color="#2b7fff"></clip-loader>
     </div>
 
-    <div v-else-if="authStore.getUserRole == 'freelancer' && canApply">
+    <div v-else-if="authStore.getUser.user_type == 'freelancer' && canApply">
         <div class="border-1 border-gray-300 w-full h-auto flex flex-col justify-center mx-auto my-12 p-4">
             <div class="grid grid-cols-12">
                 <div class="col-span-12">

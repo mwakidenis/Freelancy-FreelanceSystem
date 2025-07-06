@@ -2,6 +2,7 @@
 import { ref, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { debounce } from "lodash";
+import { useAuthStore } from "../../authStore";
 import api from "../../api";
 import InputBox from "../component/InputBox.vue";
 import { Search } from 'lucide-vue-next';
@@ -9,6 +10,7 @@ import { ClipLoader } from 'vue-spinner/dist/vue-spinner.min.js';
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 
 const isLoading = ref(true);
 

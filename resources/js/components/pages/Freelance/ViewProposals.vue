@@ -41,7 +41,7 @@ const savingMessage = ref();
 const isError = ref(false);
 
 onMounted(async() => {
-    if (authStore.getUserRole == 'freelancer'){
+    if (authStore.getUser.user_type == 'freelancer'){
         await fetchProposals();
         isFreelancer.value = true;
     }

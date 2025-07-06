@@ -56,12 +56,7 @@ export const useAuthStore = defineStore("auth", {
   getters: {
     isAuthenticated: (state) => !!state.user,
     getUser: (state) => state.user,
-    getUserRole: (state) => state.user.user_type,
-    //below returns error!
-    // getUserName: (state) => state.user?.data.name, 
-    // isFreelancer: (state) => state.user?.data.user_type === 'freelancer',
-    // isClient: (state) => state?.user.data.user_type === 'client',
-    // isEmailVerified: (state) => state.user?.email_verified === true, // ✅ Check email verification
+    isEmailVerified: (state) => state.user.email_verified != null ? true : false, // ✅ Check email verification
   },
   persist: true, // Enable Pinia persist
 });

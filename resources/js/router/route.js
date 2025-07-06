@@ -1,13 +1,15 @@
 import { createRouter,createWebHistory } from "vue-router";
 import { useAuthStore } from "../authStore";
+
 import MainLayout from "../components/layout/MainLayout.vue";
-import Home from "../components/pages/Home.vue";
+// FOR AUTH
 import Login from "../components/pages/Login.vue";
-import Register from "../components/pages/Register.vue";
 import EmailVerify from "../components/pages/EmailVerify.vue";
 import EmailVerifySubmit from "../components/pages/EmailVerifySubmit.vue";
+// FOR GENERAL ROUTE
+import Home from "../components/pages/Home.vue";
+import FreelanceView from "../components/pages/Freelance/View.vue";
 // FOR FREELANCER MODULE
-import FreelanceView from "../components/pages/Freelance/View.vue"; //viewing all list of freelances
 import FreelanceViewProposals from "../components/pages/Freelance/ViewProposals.vue";
 import FreelanceApply from "../components/pages/Freelance/Apply.vue";
 // FOR CLIENT MODULE
@@ -31,17 +33,27 @@ const routes = [
             {
                 path: '/:slug',
                 component: FreelanceView,
-                name: "freelance-details"
+                name: "freelance-details",
             },
             {
                 path: '/:slug/apply',
                 component: FreelanceApply,
                 name: "freelance-apply",
+                meta: { requiresAuth: true }
             },
+            // CLIENT
             {
                 path: '/projects',
                 component: ClientViewProjects,
-                name: "client-view-projects"
+                name: "client-view-projects",
+                meta: { requiresAuth: true }
+            },
+            // FREELANCERS
+            {
+                path: '/proposals',
+                component: FreelanceViewProposals,
+                name: "freelancer-view-proposals",
+                meta: { requiresAuth: true }
             },
             // PROFILE
             {
@@ -52,40 +64,33 @@ const routes = [
             {
                 path: '/profile/edit',
                 component: EditProfile,
-                name: "edit-profile"
-            },
-            // FREELANCERS
-            {
-                path: '/proposals',
-                component: FreelanceViewProposals,
-                name: "freelancer-view-proposals"
+                name: "edit-profile",
+                meta: { requiresAuth: true }
             },
         ]
     },
     {
         path: '/inbox/:username?',
         component: Message,
-        name: "inbox"
+        name: "inbox",
+        meta: { requiresAuth: true }
     },
     {
         path: '/inbox/new',
         component: Message,
-        name: "new-message"
+        name: "new-message",
+        meta: { requiresAuth: true }
     },
     {
         path: '/login',
         component: Login,
+        name: "login",
         meta: { requiresGuest: true } // Only accessible by guests
-    },
-    {
-        path: '/register',
-        component: Register,
-        meta: { requiresGuest: true }
     },
     {
         path: '/verify', //For displaying that you need email verification to fully access the site
         component: EmailVerify,
-        // meta: { requiresAuth: true }
+        meta: { requiresAuth: true }
     },
     {
         path: '/verify-submit', //Once the mail has been clicked, the user will be forwarded to this link
@@ -108,11 +113,12 @@ route.beforeEach(async (to, from, next) => {
     if (to.meta.requiresAuth && !authStore.isAuthenticated){ 
         next("/login"); //case if the user is not logged in but want to access authenticated pages
     } else if (to.meta.requiresGuest && authStore.isAuthenticated){ 
-        next("/example"); //case if the user is already logged in but want to access log in page
-    // } else if (to.meta.requiresAuth && authStore.user['email_verified_at'] == null && to.path !== "/verify"){
-    //     next("/verify"); //case if the user is already logged in but email not yet verified
-    // } else if (to.meta.requiresAuth && authStore.user['email_verified_at'] != null && to.path == "/verify") {
-    //     next("/example"); //case if the user is already logged in + email is verified but want to access verify email page
+        next("/home"); //case if the user is already logged in but want to access log in page
+    } else if (to.meta.requiresAuth && authStore.isEmailVerified == false && to.path !== "/verify"){
+        console.log("i reached here");
+        next("/verify"); //case if the user is already logged in but email not yet verified
+    } else if (to.meta.requiresAuth && authStore.isEmailVerified == true && to.path == "/verify") {
+        next("/home"); //case if the user is already logged in + email is verified but want to access verify email page
     } else {
         next(); //case if no problems arise, just direct to the page
     }

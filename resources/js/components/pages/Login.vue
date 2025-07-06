@@ -20,6 +20,7 @@ const isLoginWrong = ref(false);
 const isLoginPasswordToggled = ref(false);
 
 const registerName = ref(null);
+const registerUsername = ref(null);
 const registerEmail = ref(null);
 const registerRole = ref(null);
 const registerPassword = ref(null);
@@ -42,6 +43,7 @@ function emptyLoginInput() {
 
 function emptyRegisterInput(){
     registerName.value = null;
+    registerUsername.value = null;
     registerEmail.value = null;
     registerRole.value = null;
     registerPassword.value = null;
@@ -83,15 +85,16 @@ const login = async () => {
 
 const register = async () => {
     isLoading.value = true;
+    const formData = new FormData();
+    formData.append('name',registerName.value);
+    formData.append('username',registerUsername.value);
+    formData.append('email',registerEmail.value);
+    formData.append('role',registerRole.value);
+    formData.append('password',registerPassword.value);
     setTimeout(async() => {
         if (registerPassword.value == registerConfirmPassword.value){
         try {
-            const response = await api.post('/auth/register', {
-                name:registerName.value,
-                email:registerEmail.value,
-                role:registerRole.value,
-                password:registerPassword.value
-            });
+            const response = await api.post('/auth/register', formData);
             if (response.status === 201){
                 isRegisterSuccess.value = true;
             }
@@ -104,6 +107,8 @@ const register = async () => {
             } else {
                 registerErrorMessage.value = "Server error.";
             }
+        } finally {
+            emptyRegisterInput();
         }
     } else {
         isConfirmPasswordWrong.value = true;
@@ -126,7 +131,7 @@ const register = async () => {
             </div>
         </div>
 
-        <div class="h-screen w-full flex justify-center items-center">
+        <div class="lg:h-screen min-h-screen w-full flex justify-center items-center">
             <div class="h-10/12 w-11/12 lg:w-8/12 bg-white rounded-lg grid grid-cols-1 lg:grid-cols-2">
                 
                 <!-- LEFT COLUMN: LOGIN -->
@@ -163,7 +168,7 @@ const register = async () => {
                                 </div>
                             </div>
 
-                            <p class="text-xs text-center">
+                            <p class="text-xs text-center text-gray-500">
                                 Don't have an account? 
                                 <a class="text-blue-500 cursor-pointer" @click="toggleLogin">Sign up here.</a>
                             </p>
@@ -192,6 +197,14 @@ const register = async () => {
                                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center">
                                     <p class="col-span-1">Name</p>
                                     <InputBox type="text" v-model="registerName"
+                                        :class="{
+                                            'col-span-3 w-full': true,
+                                            'border border-red-500' : isRegisterWrong}"/>
+                                </div>
+
+                                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center">
+                                    <p class="col-span-1">Username</p>
+                                    <InputBox type="text" v-model="registerUsername"
                                         :class="{
                                             'col-span-3 w-full': true,
                                             'border border-red-500' : isRegisterWrong}"/>
@@ -245,7 +258,7 @@ const register = async () => {
                                 </div>
                             </div>
 
-                            <p class="text-xs text-center">
+                            <p class="text-xs text-center text-gray-500">
                                 Already have an account? 
                                 <a class="text-blue-500 cursor-pointer" @click="toggleLogin">Login here.</a>
                             </p>

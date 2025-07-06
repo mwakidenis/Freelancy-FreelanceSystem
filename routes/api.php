@@ -38,7 +38,7 @@ Route::group(['namespace'=>'App\Http\Controllers'], function() {
         Route::post('/login',['as'=>'login','uses'=>'AuthController@auth']);
         Route::get('/user',['as'=>'user','uses'=>'AuthController@checkUser']);
         Route::post('/logout',['as'=>'logout','uses'=>'AuthController@logout']);
-        Route::post('/register',['as'=>'register','uses'=>'AuthController@register']);
+        Route::post('/register',['uses'=>'AuthController@register']);
     });
 
 

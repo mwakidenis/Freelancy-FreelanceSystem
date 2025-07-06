@@ -95,7 +95,8 @@ class AuthController extends Controller
         DB::beginTransaction();
         try{
             $user = new User();
-            $user->name = $request->input('name');
+            $user->name = Str::title($request->input('name'));
+            $user->username = Str::lower($request->input('username'));
             $user->email = Str::lower($request->input('email'));
             $user->role = Str::lower($request->input('role'));
             $user->password = bcrypt($request->input('password'));

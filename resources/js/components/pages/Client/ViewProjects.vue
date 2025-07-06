@@ -53,7 +53,7 @@ const dateParams = ref('');
 const alphabeticalParams = ref('');
 
 onMounted(async () => {
-    if (authStore.isAuthenticated && authStore.getUserRole == 'client'){
+    if (authStore.isAuthenticated && authStore.getUser.user_type == 'client'){
         await fetchFreelances();
     }
     isLoading.value = false;
@@ -398,7 +398,7 @@ async function updateStatusFreelance() {
         <clip-loader color="#2b7fff"></clip-loader>
     </div>
 
-    <div v-else-if="authStore.isAuthenticated && authStore.getUserRole == 'client'">
+    <div v-else-if="authStore.isAuthenticated && authStore.getUser.user_type == 'client'">
         <div class="flex items-center gap-4 my-4">
             <div class="flex-1">
                 <div class="relative">

@@ -49,10 +49,10 @@ const logout = async () => {
             <router-link :to="{name:'inbox'}">
                 <MessageSquareMore/>
             </router-link>
-            <div v-if="authStore.getUserRole == 'client'">
+            <div v-if="authStore.getUser.user_type == 'client'">
                 <router-link :to="{name:'client-view-projects'}">Projects</router-link>
             </div>
-            <div v-if="authStore.getUserRole == 'freelancer'">
+            <div v-if="authStore.getUser.user_type == 'freelancer'">
                 <router-link :to="{name:'freelancer-view-proposals'}">Proposals</router-link>
             </div>
             <router-link :to="{name:'edit-profile'}">
